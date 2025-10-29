@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
-import Calendar from "./app/calendar/Calendar";
-import Goal from "./app/calendar/Goal"
+import Calendar from "app/calendar/Calendar.jsx";
+import Goal from "app/calendar/Goal.jsx"
 
 export default function App() {
   const [selectedDay, setSelectedDay] = useState(1);
