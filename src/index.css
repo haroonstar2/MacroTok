@@ -1,0 +1,31 @@
+:root {
+  font-family: Arial, sans-serif;
+  color: #000;
+  background-color: #fff;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  color: blue;
+  text-decoration: none;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0.5em 0;
+  font-weight: bold;
+}
+
+button {
+  padding: 0.5em 1em;
+  border: 1px solid #000;
+  background-color: #eee;
+  cursor: pointer;
+}
+
+button:active {
+  background-color: #ddd;
+}
