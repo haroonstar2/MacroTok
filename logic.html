@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<!-- ... existing code ... -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Load Firebase libraries -->
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        // ... existing code ... -->
+        import { 
+            getFirestore, 
+            doc, 
+            addDoc, 
+            onSnapshot, 
+            collection, 
+            query, 
+            where,
+            setLogLevel
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- GLOBAL VARIABLES ---
+        let db, auth, userId; // Firebase instances and current user ID
+        let currentYear, currentMonth; // State for the calendar
+        let userMeals = []; // Local cache for all user meals, updated by Firestore listener
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+        // --- SPOONACULAR API KEY ---
+        // !!! IMPORTANT: Add your Spoonacular API key here !!!
+        const SPOONACULAR_API_KEY = ""; // e.g., "your_api_key_here"
+
+        // --- DOM ELEMENTS ---
+        // Caching DOM elements for quick access.
+        // The 'pages' object is used by showPage() to manage which "page" is visible.
+        const pages = {
+            landing: document.getElementById('landingPage'),
+            login: document.getElementById('loginPage'),
+            main: document.getElementById('mainApp'), // The main container for Home + Calendar
+            home: document.getElementById('homePage'),
+            calendar: document.getElementById('calendarPage')
+        };
+        const mainNav = document.getElementById('mainNav');
+        const loginError = document.getElementById('loginError');
+        const calendarGrid = document.getElementById('calendarGrid');
+        const currentMonthYear = document.getElementById('currentMonthYear');
+        const addMealModal = document.getElementById('addMealModal');
+        const addMealForm = document.getElementById('addMealForm');
+        const mealDateInput = document.getElementById('mealDate');
+        const cancelModal = document.getElementById('cancelModal');
+
+        /**
+         * Shows a specific page and hides all others.
+         * This function controls the main navigation flow (Landing -> Login -> Main App).
+         * @param {string} pageKey - The key of the page to show (e.g., 'landing', 'login', 'main')
+         */
+        function showPage(pageKey) {
+            // 1. Hide all pages
+            Object.values(pages).forEach(page => page.classList.add('hidden'));
+
+            // 2. Special logic for 'main' page
+            if (pageKey === 'main') {
+                // Show the main app container and its navigation
+                pages.main.classList.remove('hidden');
+                mainNav.classList.remove('hidden');
+                // Default to showing the 'home' sub-page when the main app loads
+                showSubPage('home'); 
+            } else if (pages[pageKey]) {
+                // 3. Show the requested page (e.g., 'landing' or 'login')
+                pages[pageKey].classList.remove('hidden');
+                // 4. Hide the main nav if we're not on the main app page
+                if(pageKey !== 'main') mainNav.classList.add('hidden');
+            }
+        }
+
+        /**
+         * Renders the Pinterest-style food grid by fetching data from Spoonacular.
+         * This is now an async function to handle the API call.
+         */
+        async function renderFoodGrid() {
+            const grid = document.getElementById('foodGrid');
+            
+            // 1. Check for API Key
+            if (!SPOONACULAR_API_KEY) {
+                grid.innerHTML = `<div class="col-span-full text-center p-4 bg-yellow-100 text-yellow-800 rounded-lg">
+                    Please add your Spoonacular API key to the 'SPOONACULAR_API_KEY' variable in the script to load recipes.
+                </div>`;
+                return;
+            }
+
+            // 2. Show a loading state
+            grid.innerHTML = `<div class="col-span-full text-center p-4 text-gray-600">
+                <svg class="animate-spin h-6 w-6 text-indigo-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Loading recipes...
+            </div>`;
+
+            try {
+                // 3. Fetch random recipes from Spoonacular
+                const response = await fetch(`https://api.spoonacular.com/recipes/random?number=15&apiKey=${SPOONACULAR_API_KEY}`);
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || `API Error (${response.status})`);
+                }
+
+                const data = await response.json();
+                const recipes = data.recipes;
+
+                // 4. Clear loading state
+                grid.innerHTML = '';
+
+                // 5. Populate grid with real recipe cards
+                if (!recipes || recipes.length === 0) {
+                     grid.innerHTML = `<div class="col-span-full text-center p-4 bg-gray-100 text-gray-700 rounded-lg">
+                        No recipes found. Try again later.
+                    </div>`;
+                    return;
+                }
+
+                recipes.forEach(recipe => {
+                    const card = document.createElement('a');
+                    card.href = recipe.sourceUrl; // Link to the full recipe
+                    card.target = "_blank"; // Open in a new tab
+                    card.rel = "noopener noreferrer";
+                    // `break-inside-avoid` is the key Tailwind class for a Pinterest (masonry) layout
+                    card.className = 'mb-4 break-inside-avoid rounded-lg shadow-md overflow-hidden bg-white block hover:shadow-lg transition-shadow duration-200';
+                    
+                    card.innerHTML = `
+                        <img 
+                            src="${recipe.image}" 
+                            onerror="this.src='https://placehold.co/400x300/600475/FFFFFF?text=Image+Not+Found'" 
+                            alt="${recipe.title}" 
+                            class="w-full h-auto"
+                            loading="lazy"
+                        >
+                        <div class="p-3">
+                            <p class="font-medium text-gray-800">${recipe.title}</p>
+                            <p class="text-sm text-gray-500 mt-1">Ready in ${recipe.readyInMinutes} minutes</p>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error("Error fetching Spoonacular data:", error);
+                // 6. Show error message in the grid
+                grid.innerHTML = `<div class="col-span-full text-center p-4 bg-red-100 text-red-800 rounded-lg">
+                    <strong>Error:</strong> ${error.message}
+                </div>`;
+            }
+        }
+
+        /**
+         * Renders the calendar for a given month and year.
+         * This function builds the entire calendar grid dynamically.
+         * @param {number} year - The full year (e.g., 2025)
+         * @param {number} month - The month (0-11, where 0 is January)
+         */
+        function renderCalendar(year, month) {
+            calendarGrid.innerHTML = ''; // Clear existing grid
+            currentMonthYear.textContent = `${monthNames[month]} ${year}`;
+
+            // --- Date Calculations ---
+            // Get the day of the week for the 1st day of the month (0=Sun, 1=Mon, ...)
+            const firstDay = new Date(year, month, 1).getDay();
+            // Get the total number of days in the month (e.g., 30, 31)
+            // Using `new Date(year, month + 1, 0)` is a trick: it gets the "0th" day of the *next* month,
+            // which is the last day of the *current* month.
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            // --- Grid Building ---
+            // 1. Add day labels (Sun, Mon, ...)
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            dayNames.forEach(day => {
+                calendarGrid.innerHTML += `<div class="text-center font-medium text-gray-600 text-sm">${day}</div>`;
+            });
+
+            // 2. Add empty cells for days before the 1st of the month
+            for (let i = 0; i < firstDay; i++) {
+                calendarGrid.innerHTML += '<div></div>'; // Empty div as a spacer
+            }
+
+            // 3. Add cells for each day (1 to daysInMonth)
+            for (let day = 1; day <= daysInMonth; day++) {
+                // Create a standard date string (e.g., "2025-11-06")
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                
+                // --- Meal Logic ---
+                // Find meals for *this specific day* from our local `userMeals` cache
+                const dayMeals = userMeals.filter(meal => meal.date === dateStr);
+                
+                // Create small HTML snippets for each meal found
+                let mealsHtml = dayMeals.map(meal => `
+                    <div class="text-xs p-1 bg-indigo-100 text-indigo-800 rounded-md overflow-hidden truncate" title="${meal.name}">
+                        <strong>${meal.type}:</strong> ${meal.name}
+                    </div>
+                `).join('');
+
+                // --- Cell Creation ---
+                const cell = document.createElement('div');
+                cell.className = 'border rounded-lg p-2 min-h-[100px] bg-white shadow-sm hover:bg-gray-50 cursor-pointer flex flex-col space-y-1';
+                cell.dataset.date = dateStr; // Store the date on the element
+                cell.innerHTML = `
+                    <span class="font-medium text-gray-800">${day}</span>
+                    <div class="flex-grow space-y-1">${mealsHtml}</div>
+                `;
+                
+                // Add click listener to open the "Add Meal" modal
+                cell.addEventListener('click', () => {
+                    // Pre-fill the modal's date input with the clicked date
+                    mealDateInput.value = dateStr;
+                    addMealModal.classList.remove('hidden');
+                });
+                
+                calendarGrid.appendChild(cell);
+            }
+        }
+
+        /**
+         * Changes the calendar to the previous or next month.
+         * @param {number} delta - -1 for previous month, 1 for next month
+         */
+        function changeMonth(delta) {
+            // Update the global month/year state
+            currentMonth += delta;
+            if (currentMonth > 11) {
+                currentMonth = 0; // Go to January
+                currentYear++;
+            } else if (currentMonth < 0) {
+                currentMonth = 11; // Go to December
+                currentYear--;
+            }
+            // Re-render the calendar with the new month/year
+            renderCalendar(currentYear, currentMonth);
+        }
+
+        /**
+         * Sets up the Firestore listener for user meals.
+         * This function is called *once* after login.
+         */
+        function setupMealListener() {
+            if (!db || !userId) return; // Safety check
+
+            // Define the path to the user's private meal collection
+            // This path is unique for each user
+            const mealsCollectionRef = collection(db, 'artifacts', window.appId, 'users', userId, 'meals');
+            
+            // Create a query for all documents in that collection
+            const q = query(mealsCollectionRef);
+
+            // onSnapshot() is the core of Firestore's real-time functionality.
+            // It listens for *any* changes (adds, deletes, updates) in the collection.
+            // When a change happens (or on initial load), it runs the callback function.
+            onSnapshot(q, (snapshot) => {
+                // 1. Map all documents from the snapshot into our local `userMeals` array
+                userMeals = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                // 2. Re-render the calendar *if* it's currently being viewed
+                // This ensures the calendar instantly updates when a new meal is added.
+                if (!pages.calendar.classList.contains('hidden')) {
+                    renderCalendar(currentYear, currentMonth);
+                }
+            }, (error) => {
+                console.error("Error listening to meals: ", error);
+            });
+        }
+
+        /**
+         * Saves a new meal to Firestore.
+         * This is triggered by the "Add Meal" modal form.
+         */
+        async function saveMeal(e) {
+            e.preventDefault(); // Stop the form from reloading the page
+            
+            // 1. Get data from the form
+            const formData = new FormData(addMealForm);
+            const meal = {
+                date: formData.get('date'),
+                type: formData.get('type'),
+                name: formData.get('name'),
+            };
+
+            // 2. Simple validation
+            if (!meal.date || !meal.type || !meal.name) {
+                // We use a custom modal for alerts, but for simplicity, we'll use the browser alert here.
+                // In a real app, you'd show a custom error message.
+                // alert("Please fill out all fields."); 
+                console.warn("Please fill out all fields.");
+                return;
+            }
+
+            try {
+                // 3. Get the path to the user's collection
+                const mealsCollectionRef = collection(db, 'artifacts', window.appId, 'users', userId, 'meals');
+                // 4. Add the new meal object as a new document
+                await addDoc(mealsCollectionRef, meal);
+                
+                // 5. Reset the form and hide the modal
+                addMealForm.reset();
+                addMealModal.classList.add('hidden');
+                // We don't need to manually update the calendar here,
+                // because the `onSnapshot` listener in setupMealListener()
+                // will detect this new document and re-render the calendar automatically.
+            } catch (error) {
+                console.error("Error adding meal: ", error);
+                // alert("Could not save meal. Please try again.");
+            }
+        }
+
+        // --- AUTHENTICATION FUNCTIONS ---
+
+        /**
+         * A helper function to display authentication errors on the login page.
+         * @param {Error} error - The error object from Firebase Auth.
+         * @param {string} [messagePrefix="Login failed:"] - A prefix for the console log.
+         */
+        function handleAuthError(error, messagePrefix = "Login failed:") {
+            console.error(messagePrefix, error);
+            // Display a user-friendly message
+            loginError.textContent = error.message || "An unknown error occurred.";
+            loginError.classList.remove('hidden');
+        }
+
+        /**
+         * Handles Google Sign-In popup.
+         */
+        async function loginWithGoogle() {
+            loginError.classList.add('hidden'); // Clear previous errors
+            try {
+                const provider = new GoogleAuthProvider();
+                await signInWithPopup(auth, provider);
+                // Success! The onAuthStateChanged listener will now fire and call showPage('main').
+            } catch (error) {
+                handleAuthError(error, "Google sign-in failed:");
+            }
+        }
+
+        /**
+         * Handles standard Email/Password Login.
+         */
+        async function loginWithEmail(e) {
+            e.preventDefault(); // Stop form submission
+            loginError.classList.add('hidden');
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                // Success! onAuthStateChanged listener will fire and show the main app.
+            } catch (error) {
+                handleAuthError(error, "Email/Pass sign-in failed:");
+            }
+        }
+
+        /**
+         * Handles new user sign-up with Email/Password.
+         */
+        async function signUpWithEmail(e) {
+            e.preventDefault();
+            loginError.classList.add('hidden');
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+                // Success! onAuthStateChanged listener will fire and show the main app.
+            } catch (error) {
+                handleAuthError(error, "Email/Pass sign-up failed:");
+            }
+        }
+ 
+        /**
+         * Handles user logout.
+         */
+        async function logout() {
+            try {
+                await signOut(auth);
+                // Success! onAuthStateChanged listener will fire, see (user) is null,
+                // and call showPage('login').
+            } catch (error) {
+                console.error("Sign out failed:", error);
+            }
+        }
+
+
+        // --- INITIALIZATION ---
+        // This runs once the page's HTML content is loaded.
+        window.addEventListener('DOMContentLoaded', () => {
+            // Start by showing the landing page
+            showPage('landing');
+
+            // --- Firebase Initialization ---
+            try {
+                // These global variables are injected by the Canvas environment.
+                // We provide fallback values for local development.
+                window.appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+                const initialToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+                // Basic check to ensure Firebase is configured
+                if (!firebaseConfig.apiKey) {
+                    console.error("Firebase config is missing.");
+                    document.body.innerHTML = "Error: Firebase configuration is missing. This app cannot start.";
+                    return;
+                }
+
+                // Initialize Firebase App and services
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                setLogLevel('debug'); // Enable Firestore debug logging in the console
+
+                // --- Auth State Listener (The Core of the App) ---
+                // onAuthStateChanged is the *most important* listener.
+                // It fires when the app loads and *any time* the user's login state changes
+                // (e.g., after login, signup, or logout).
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        // --- USER IS LOGGED IN ---
+                        console.log("User is logged in:", user.uid);
+                        userId = user.uid; // Store the user ID globally
+                        
+                        // Update the UI with user info
+                        document.getElementById('userEmail').textContent = user.email || 'Logged In';
+                        
+                        // Set up all data listeners for this user
+                        setupMealListener();
+                        // Load the (static) food grid
+                        renderFoodGrid();
+
+                        // Set initial calendar date to today
+                        const today = new Date();
+                        currentYear = today.getFullYear();
+                        currentMonth = today.getMonth();
+                        
+                        // Finally, show the main application
+                        showPage('main');
+                    } else {
+                        // --- USER IS LOGGED OUT ---
+                        console.log("User is logged out.");
+                        userId = null; // Clear the user ID
+                        userMeals = []; // Clear any local data
+                        
+                        // Show the login page
+                        showPage('login');
+                    }
+                });
+
+                // --- Handle Initial Authentication ---
+                // This block tries to log the user in when the app first loads.
+                (async () => {
+                    try {
+                        if (initialToken) {
+                            // If running in Canvas with a user, use the provided token
+                            await signInWithCustomToken(auth, initialToken);
+                        } else {
+                            // If running locally or as a guest, sign in anonymously
+                            await signInAnonymously(auth);
+                        }
+                    } catch (error) {
+                        console.error("Initial authentication failed:", error);
+                        // If auth fails, the onAuthStateChanged listener will
+                        // eventually run with (user=null) and show the login page.
+                        showPage('login'); // Fallback to login page on auth error
+                    }
+                })();
+
+                // --- Landing Page Logic ---
+                // After 2 seconds, transition from the Landing page.
+                setTimeout(() => {
+                    // Check if we are *still* on the landing page
+                    if (!pages.landing.classList.contains('hidden')) {
+                        // The onAuthStateChanged listener should have run by now.
+                        // Check if a user is logged in and show the correct page.
+                        if (auth.currentUser) {
+                            showPage('main');
+                        } else {
+                            showPage('login');
+                        }
+                    }
+                }, 2000); // 2-second splash screen
+
+
+                // --- EVENT LISTENERS ---
+                // Bind all the buttons to their functions
+                
+                // Auth buttons
+                document.getElementById('googleLoginBtn').addEventListener('click', loginWithGoogle);
+                document.getElementById('loginForm').addEventListener('submit', loginWithEmail);
+                document.getElementById('signUpBtn').addEventListener('click', signUpWithEmail);
+                document.getElementById('logoutBtn').addEventListener('click', logout);
+
+                // Main navigation buttons
+                document.getElementById('navHome').addEventListener('click', () => showSubPage('home'));
+                document.getElementById('navCalendar').addEventListener('click', () => showSubPage('calendar'));
+
+                // Calendar controls
+                document.getElementById('prevMonth').addEventListener('click', () => changeMonth(-1));
+                document.getElementById('nextMonth').addEventListener('click', () => changeMonth(1));
+
+                // Modal controls
+                addMealForm.addEventListener('submit', saveMeal);
+                cancelModal.addEventListener('click', () => {
+                    addMealModal.classList.add('hidden');
+                    addMealForm.reset();
+                });
+
+            } catch (error) {
+                console.error("Failed to initialize app:", error);
+                document.body.innerHTML = `<div class="p-4 bg-red-100 text-red-800">Error: ${error.message}. App cannot start.</div>`;
+            }
+        });
+
+    </script>
+    <style>
+        /* ... existing code ... */
+    </style>
+</head>
+<body class="bg-gray-100 antialiased">
+
+    <!-- App Container -->
+<!-- ... existing code ... -->
+
+
