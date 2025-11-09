@@ -1,0 +1,150 @@
+import React from "react";
+import "./Landing.css";
+
+export default function Landing() {
+  return (
+    <main className="landing">
+      {/* Header */}
+      <header className="landing__header">
+        <div className="brand">
+          <span className="brand__dot" />
+          <span className="brand__name">MacroTok</span>
+        </div>
+
+        <nav className="nav">
+          <a href="#features" className="nav__link">Features</a>
+          <a href="#how" className="nav__link">How it works</a>
+          <a href="#faq" className="nav__link">FAQ</a>
+          <button
+            className="btn btn--ghost"
+            onClick={() => document.body.classList.toggle("dark")}
+            aria-label="Toggle theme"
+            title="Toggle theme"
+          >
+            🌓
+          </button>
+          <a className="btn btn--outline" href="/login">Log in</a>
+          <a className="btn btn--filled" href="/signup">Sign up</a>
+        </nav>
+      </header>
+
+      {/* Hero */}
+      <section className="hero">
+        <div className="hero__copy">
+          <h1 className="hero__title">Plan meals that fit your life.</h1>
+          <p className="hero__subtitle">
+            Schedule recipes, track intake (e.g., <strong>1600/1900 kcal</strong>),
+            and review weekly or monthly—same clean style as your Calendar page.
+          </p>
+          <div className="hero__cta">
+            <a className="btn btn--filled btn--lg" href="/calendar">Open Calendar</a>
+            <a className="btn btn--outline btn--lg" href="#features">See Features</a>
+          </div>
+
+          <ul className="hero__points">
+            <li>Fast add: Breakfast / Lunch / Dinner</li>
+            <li>Quick edit & remove on any day</li>
+            <li>Weekly & Monthly review views</li>
+          </ul>
+        </div>
+
+        <div className="hero__card">
+          <div className="card__header">
+            <span className="dot red" />
+            <span className="dot yellow" />
+            <span className="dot green" />
+          </div>
+          <div className="card__body">
+            <div className="kcal">
+              <div className="kcal__label">Today’s Intake</div>
+              <div className="kcal__value">1600 / 1900 kcal</div>
+              <div className="kcal__bar">
+                <span style={{ width: "84%" }} />
+              </div>
+            </div>
+            <div className="mini-grid">
+              <div className="mini-tile">
+                <div className="mini-tile__title">Breakfast</div>
+                <div className="mini-tile__text">Oats & berries</div>
+              </div>
+              <div className="mini-tile">
+                <div className="mini-tile__title">Lunch</div>
+                <div className="mini-tile__text">Chicken & rice</div>
+              </div>
+              <div className="mini-tile">
+                <div className="mini-tile__title">Dinner</div>
+                <div className="mini-tile__text">Salmon & veggies</div>
+              </div>
+              <div className="mini-tile">
+                <div className="mini-tile__title">Snacks</div>
+                <div className="mini-tile__text">Greek yogurt</div>
+              </div>
+            </div>
+            <div className="card__actions">
+              <button className="btn btn--ghost">Add to Calendar</button>
+              <button className="btn btn--ghost">Edit</button>
+              <button className="btn btn--ghost">Remove</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section id="features" className="features">
+        <h2 className="section__title">What you can do</h2>
+        <div className="features__grid">
+          <article className="feature">
+            <div className="feature__icon">🗓️</div>
+            <h3 className="feature__title">Schedule Recipes</h3>
+            <p className="feature__text">
+              Drop meals onto any date—same look & feel as your Calendar.
+            </p>
+          </article>
+          <article className="feature">
+            <div className="feature__icon">🍽️</div>
+            <h3 className="feature__title">Quick Add</h3>
+            <p className="feature__text">
+              One-tap Breakfast, Lunch, Dinner add buttons to speed things up.
+            </p>
+          </article>
+          <article className="feature">
+            <div className="feature__icon">✏️</div>
+            <h3 className="feature__title">Edit & Remove</h3>
+            <p className="feature__text">
+              Change portions, swap meals, or remove slots with minimal clicks.
+            </p>
+          </article>
+          <article className="feature">
+            <div className="feature__icon">📊</div>
+            <h3 className="feature__title">Intake Review</h3>
+            <p className="feature__text">
+              Track daily totals like <strong>1600/1900</strong> and see weekly/monthly trends.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section id="how" className="how">
+        <h2 className="section__title">How it works</h2>
+        <ol className="steps">
+          <li className="step"><span>1</span> Add your meals to the Calendar</li>
+          <li className="step"><span>2</span> Track intake as you go</li>
+          <li className="step"><span>3</span> Review weekly & monthly</li>
+        </ol>
+      </section>
+
+      {/* Footer */}
+      <footer className="footer">
+        <div className="footer__row">
+          <div>© {new Date().getFullYear()} MacroTok</div>
+          <div className="footer__links">
+            <a href="#faq">FAQ</a>
+            <a href="#privacy">Privacy</a>
+            <a href="#terms">Terms</a>
+          </div>
+        </div>
+      </footer>
+    </main>
+  );
+}
