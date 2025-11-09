@@ -1,4 +1,4 @@
-let store = { dailyGoal: 1900 };
+let store = { dailyGoal: 1950 };
 
 export async function getGoal() {
   return delay({ ...store });
