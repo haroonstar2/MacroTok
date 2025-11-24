@@ -1,34 +1,35 @@
 /**
  * Sidebar.jsx
  * ------------------------------------------------------------
- * MacroTok — Sidebar Navigation Component
+ * Navigation panel for the MacroTok application.
  *
- * Displays the main navigation links (Home, Search, Meal Plan, etc.)
- * along with the brand title and simple profile footer section.
+ * Responsibilities:
+ *   - Display navigation links such as Home, Search, Meal Plan, etc.
+ *   - Highlight the active navigation section.
+ *   - Trigger parent callbacks when a section is selected.
+ *   - Display a static profile summary at the bottom.
  *
  * Props:
- *   - active: the currently active section id (e.g., "home")
- *   - onNav: callback when a nav item is clicked (receives the id)
+ *   - active: string identifying the currently selected section
+ *   - onNav: function invoked when a navigation item is clicked
  * ------------------------------------------------------------
  */
 
 import React from "react";
 import "./sidebar.css";
 
-/* ============================================================
-   NAV ITEM (Reusable Button Component)
+/* ------------------------------------------------------------
+   NavItem Component
    ------------------------------------------------------------
-   Each item includes:
-     - icon (SVG)
-     - label (text)
-     - click event (calls parent onNav handler)
-     - "active" style when selected
-   ============================================================ */
+   Represents a single clickable navigation button.
+   Displays an icon and label.
+   Applies an "active" class when the id matches the current view.
+------------------------------------------------------------ */
 function NavItem({ id, label, icon, active, onClick }) {
   return (
     <button
-      className={`sb-item ${active === id ? "active" : ""}`} // highlight if active
-      onClick={() => onClick?.(id)} // notify parent of selection
+      className={`sb-item ${active === id ? "active" : ""}`}
+      onClick={() => onClick?.(id)}
     >
       <span className="sb-icn" aria-hidden>
         {icon}
@@ -38,28 +39,29 @@ function NavItem({ id, label, icon, active, onClick }) {
   );
 }
 
-/* ============================================================
-   SIDEBAR MAIN COMPONENT
+/* ------------------------------------------------------------
+   Sidebar Component
    ------------------------------------------------------------
+   Provides the left-side navigation structure.
    Contains:
-     1. Brand title
-     2. Navigation items (Home, Search, etc.)
-     3. Profile section at bottom
-   ============================================================ */
+     • Application brand
+     • Navigation item list
+     • Profile section at the bottom
+------------------------------------------------------------ */
 export default function Sidebar({ active = "home", onNav }) {
-  /* -------------------------------------------
-     NAVIGATION ITEMS
-     Each object holds:
-       - id (identifier string)
-       - label (menu name)
-       - icon (inline SVG)
-     ------------------------------------------- */
+  /* ------------------------------------------------------------
+     Navigation Item Definitions
+     ------------------------------------------------------------
+     Each entry contains:
+       - id: unique identifier
+       - label: display text
+       - icon: inline SVG symbol
+  ------------------------------------------------------------ */
   const items = [
     {
       id: "home",
       label: "Home",
       icon: (
-        // Home icon (house)
         <svg
           width="22"
           height="22"
@@ -68,16 +70,8 @@ export default function Sidebar({ active = "home", onNav }) {
           stroke="currentColor"
           strokeWidth="1.8"
         >
-          <path
-            d="M3 11.5L12 4l9 7.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M5.5 10.5V20h13V10.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+          <path d="M3 11.5L12 4l9 7.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M5.5 10.5V20h13V10.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       ),
     },
@@ -85,7 +79,6 @@ export default function Sidebar({ active = "home", onNav }) {
       id: "search",
       label: "Search",
       icon: (
-        // Magnifying glass
         <svg
           width="22"
           height="22"
@@ -103,7 +96,6 @@ export default function Sidebar({ active = "home", onNav }) {
       id: "plan",
       label: "Meal Plan",
       icon: (
-        // Calendar icon
         <svg
           width="22"
           height="22"
@@ -121,7 +113,6 @@ export default function Sidebar({ active = "home", onNav }) {
       id: "saved",
       label: "Saved",
       icon: (
-        // Bookmark icon
         <svg
           width="22"
           height="22"
@@ -138,7 +129,6 @@ export default function Sidebar({ active = "home", onNav }) {
       id: "trending",
       label: "Trending",
       icon: (
-        // Trending up arrow
         <svg
           width="22"
           height="22"
@@ -156,7 +146,6 @@ export default function Sidebar({ active = "home", onNav }) {
       id: "community",
       label: "Community",
       icon: (
-        // Users / Group icon
         <svg
           width="22"
           height="22"
@@ -174,20 +163,18 @@ export default function Sidebar({ active = "home", onNav }) {
     },
   ];
 
-  /* ============================================================
-     RENDER STRUCTURE
+  /* ------------------------------------------------------------
+     Render Structure
      ------------------------------------------------------------
-     <aside> — main sidebar container
-       • Brand title (MacroTok)
-       • Navigation map (NavItem)
-       • Profile section
-     ============================================================ */
+     <aside>                  Wrapper for entire sidebar
+       • Brand
+       • Navigation list
+       • Profile summary
+  ------------------------------------------------------------ */
   return (
     <aside className="sidebar">
-      {/* App brand name at top */}
       <div className="sb-brand">MacroTok</div>
 
-      {/* Navigation menu list */}
       <nav className="sb-nav">
         {items.map((it) => (
           <NavItem
@@ -201,7 +188,6 @@ export default function Sidebar({ active = "home", onNav }) {
         ))}
       </nav>
 
-      {/* Profile summary at bottom of sidebar */}
       <div className="sb-profile">
         <div className="sb-avatar">U</div>
         <div>

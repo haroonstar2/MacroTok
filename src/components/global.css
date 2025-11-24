@@ -1,25 +1,172 @@
 /* =============================================================
-   Global Styles for MacroTok Demo
+   THEME VARIABLES (Light / Dark)
+   -------------------------------------------------------------
+   Light and dark color tokens used across the application.
+   All components read from these CSS custom properties.
    ============================================================= */
 
+/* Light mode theme variables */
+.app--light {
+  --bg: #f9fafb;
+  --text: #111827;
+  --card-bg: #ffffff;
+  --border: #e5e7eb;
+  --muted-text: #6b7280;
+  --muted-bg: #f3f4f6;
+  --muted-bg-2: #f8fafc;
+  --accent: #6b46ff;        /* Accent purple used on the Landing page */
+  --accent-soft: #bbf7d0;
+  --danger: #b91c1c;
+  --danger-border: #fecaca;
+  --shadow-elevated: 0 10px 30px rgba(0, 0, 0, .12);
+  --radius: 16px;
+}
+
+/* Dark mode theme variables */
+.app--dark {
+  --bg: #0b0c10;
+  --text: #e6e7eb;
+  --card-bg: #121318;
+  --border: #242632;
+  --muted-text: #a8adbb;
+  --muted-bg: #020617;
+  --muted-bg-2: #020617;
+  --accent: #7c5cff;
+  --accent-soft: #166534;
+  --danger: #fecaca;
+  --danger-border: #7f1d1d;
+  --shadow-elevated: 0 10px 30px rgba(0, 0, 0, .25);
+  --radius: 16px;
+}
+
+/* Root wrapper for the entire React application.
+   In App.jsx: <div className={isDark ? "app app--dark" : "app app--light"}> */
+.app {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* 
+   GLOBAL RESET & TYPOGRAPHY
+   -------------------------------------------------------------
+   Basic box-sizing reset and page typography defaults.
+    */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 body {
-  font-family: system-ui, sans-serif;
-  background: #f9fafb;
-  color: #111827;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
   margin: 0;
   padding: 0;
 }
 
-/* ---------------- Calendar Styles ---------------- */
+/* Links follow the current theme colors by default */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Generic containers used for page layouts */
+.layout,
+.main,
+.landing-container,
+.feed-container {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* 
+   BUTTONS
+   -------------------------------------------------------------
+   Shared button styles (used by multiple components).
+  */
+
+button {
+  font-family: inherit;
+}
+
+/* Pill-style buttons used globally (including theme toggle) */
+.btn,
+.cal-btn,
+.theme-toggle__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease,
+    transform 0.05s ease;
+}
+
+/* Hover behavior for buttons */
+.btn:hover,
+.cal-btn:hover,
+.theme-toggle__btn:hover {
+  background: var(--muted-bg-2);
+}
+
+/* Active (pressed) state */
+.btn:active,
+.cal-btn:active,
+.theme-toggle__btn:active {
+  transform: scale(0.98);
+}
+
+/* Outline button (transparent background, used for secondary actions) */
+.btn--outline {
+  background: transparent;
+}
+
+/* Primary filled button (accent color) */
+.btn--primary {
+  background: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
+}
+
+/* Floating theme toggle in the top-right corner */
+.theme-toggle {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 1000;
+}
+
+.theme-toggle__btn {
+  font-size: 0.8rem;
+}
+
+/* =
+   CALENDAR STYLES
+   -------------------------------------------------------------
+   Styles for the calendar component and its controls.
+    */
+
+/* Outer calendar card */
 .cal-card {
   max-width: 960px;
   margin: 16px auto;
   padding: 16px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
   border-radius: 12px;
-  background: #fff;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.07);
+  background: var(--card-bg);
+  box-shadow: var(--shadow-elevated);
+  color: var(--text);
 }
+
+/* Calendar header row (month title + navigation + actions) */
 .cal-header {
   display: flex;
   justify-content: space-between;
@@ -28,156 +175,201 @@ body {
   margin-bottom: 12px;
   flex-wrap: wrap;
 }
+
+/* Left part of the header (previous / next + title) */
 .cal-header-left {
   display: flex;
   align-items: center;
   gap: 8px;
 }
+
+/* Month title */
 .cal-title {
   min-width: 180px;
   text-align: center;
   margin: 0;
   font-weight: 600;
 }
+
+/* Icon-style navigation buttons for previous/next month */
 .cal-icon-btn {
-  border: 1px solid #e5e7eb;
-  background: #fff;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text);
   border-radius: 8px;
   padding: 6px;
   cursor: pointer;
 }
+
+/* Primary schedule button in header */
 .cal-primary {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: #16a34a;
-  color: #fff;
+  background: var(--accent);
+  color: #ffffff;
   border: none;
   padding: 8px 12px;
   border-radius: 8px;
   cursor: pointer;
 }
 
+/* Calendar grid for days of the month */
 .cal-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 8px;
 }
+
+/* Weekday row above the day numbers */
 .cal-weekdays {
   margin-bottom: 6px;
 }
+
+/* Single weekday label cell (Mon, Tue, etc.) */
 .cal-weekday {
   text-align: center;
   padding: 6px 0;
-  color: #6b7280;
+  color: var(--muted-text);
   font-size: 14px;
 }
 
+/* Day cell for actual dates */
 .cal-day {
   aspect-ratio: 1 / 1;
   width: 100%;
   border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  background: #fff;
-  color: #111827;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 14px;
   cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
+
+/* Hover effect on day cell */
 .cal-day:hover {
-  background: #f3f4f6;
+  background: var(--muted-bg);
 }
+
+/* Empty placeholder cell (for padding at start of month) */
 .cal-day-empty {
   visibility: hidden;
 }
+
+/* Selected day cell */
 .cal-day-selected {
-  background: #16a34a;
-  color: #fff;
-  border-color: #16a34a;
-}
-.cal-day-today {
-  outline: 2px solid #bbf7d0;
+  background: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
 }
 
+/* Current day outline */
+.cal-day-today {
+  outline: 2px solid var(--accent-soft);
+}
+
+/* Buttons row under the grid (Deficit, Surplus, Clear) */
 .cal-actions {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
   margin-top: 16px;
 }
+
+/* Shared calendar button style overrides */
 .cal-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border: 1px solid #e5e7eb;
   border-radius: 8px;
-  background: #fff;
-  cursor: pointer;
-}
-.cal-btn:hover {
-  background: #f8fafc;
-}
-.cal-danger {
-  color: #b91c1c;
-  border-color: #fecaca;
+  padding: 8px 10px;
 }
 
+/* Danger-style button (for Clear or similar destructive actions) */
+.cal-danger {
+  color: var(--danger);
+  border-color: var(--danger-border);
+}
+
+/* Wrapper for the schedule modal under the calendar */
 .cal-modal-wrapper {
   margin-top: 16px;
 }
+
+/* Modal container for day scheduling information */
 .cal-modal {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 12px;
-  background: #fff;
+  background: var(--card-bg);
+  color: var(--text);
 }
+
+/* Modal header row (title + close button) */
 .cal-modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
+
+/* Close button inside the modal */
 .cal-close {
   padding: 4px 8px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
   border-radius: 6px;
-  background: #fff;
+  background: var(--card-bg);
+  color: var(--text);
   cursor: pointer;
 }
+
+/* Supporting text in the modal */
 .cal-modal-text {
-  color: #6b7280;
+  color: var(--muted-text);
   margin: 8px 0;
 }
+
+/* Column of action buttons inside the modal */
 .cal-modal-buttons {
   display: grid;
   gap: 8px;
 }
+
+/* Disabled state for modal buttons */
 .cal-btn-disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
+/* Summary line under the modal */
 .cal-summary {
   margin-top: 12px;
   font-size: 14px;
-  color: #374151;
+  color: var(--muted-text);
 }
 
-/* ---------------- Goal Card Styles ---------------- */
+/* 
+   GOAL CARD STYLES
+   -------------------------------------------------------------
+   Styles for the daily calorie goal widget.
+   */
+
 .goal-card {
   max-width: 480px;
   margin: 16px auto;
   padding: 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
   border-radius: 12px;
-  background: #fff;
+  background: var(--card-bg);
+  color: var(--text);
 }
+
 .goal-title {
   margin: 0 0 8px;
   font-weight: 600;
 }
+
+/* Row containing total intake and goal input */
 .goal-row {
   display: flex;
   align-items: center;
@@ -185,22 +377,1110 @@ body {
   gap: 8px;
   margin-bottom: 8px;
 }
+
+/* Read-only goal input (matching design of editable inputs) */
 .goal-input {
   width: 120px;
   padding: 6px 8px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
   border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text);
 }
+
+/* Background track for progress bar */
 .goal-bar {
   height: 10px;
-  background: #f3f4f6;
+  background: var(--muted-bg);
   border-radius: 999px;
   overflow: hidden;
 }
+
+/* Filled portion of progress bar */
 .goal-bar-fill {
   height: 10px;
-  background: #201127;
-border-radius: 999px;
-    transition: width 0.4s ease, background 0.4s ease;
+  border-radius: 999px;
+  transition: width 0.4s ease, background 0.4s ease;
+}
+
+/* Bar color when exactly on target */
+.goal-bar-fill--target {
+  background: #9ca3af;        /* neutral gray */
+}
+
+/* Bar color when in deficit */
+.goal-bar-fill--deficit {
+  background: var(--accent);
+}
+
+/* Bar color when in surplus */
+.goal-bar-fill--surplus {
+  background: #dc2626;        /* red */
+}
+
+/* Status label below the bar (On target / Deficit / Surplus) */
+.goal-status {
+  margin-top: 8px;
+  font-size: 13px;
+}
+
+/* Status color variants */
+.goal-status--target {
+  color: var(--muted-text);
+}
+
+.goal-status--deficit {
+  color: #166534;
+}
+
+.goal-status--surplus {
+  color: #991b1b;
+}
+
+/* Line summarizing per-meal intake */
+.goal-summary {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--muted-text);
+}
+
+/* 
+   FEED PAGE
+   -------------------------------------------------------------
+   Layout and card grid for the recipe feed.
+    */
+
+/* Apply box-sizing for consistency inside feed area */
+.feed,
+.feed * {
+  box-sizing: border-box;
+}
+
+/* Feed root container */
+.feed {
+  color: var(--text);
+  background: var(--bg);
+  padding: 0 20px 28px;
+}
+
+/* Header row (title + search) */
+.feed-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 0 8px;
+}
+
+.feed-header h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+/* Search input field */
+.feed .search input {
+  background: var(--muted-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  outline: none;
+  border-radius: 12px;
+  padding: 12px 14px;
+  min-width: 280px;
+}
+
+.feed .search input::placeholder {
+  color: var(--muted-text);
+}
+
+/* Intro section above the grid */
+.intro {
+  padding: 10px 0 20px;
+}
+
+.intro-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.intro-sub {
+  color: var(--muted-text);
+  font-size: 16px;
+}
+
+/* Card grid (2 columns on desktop, 1 on smaller screens) */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: 1fr;
   }
-  
+}
+
+/* 
+   FEED CARD STYLES
+   -------------------------------------------------------------
+   Visual design for individual recipe cards.
+    */
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-elevated);
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Card media region with fixed height */
+.card-media {
+  position: relative;
+  height: 200px;
+}
+
+.card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Heart (like) button in top-right of image */
+.heart {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: var(--card-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  font-size: 18px;
+  transition: transform 0.2s ease;
+}
+
+/* Hover scaling effect on heart button */
+.heart:hover {
+  transform: scale(1.12);
+}
+
+/* Visible focus ring for keyboard navigation */
+.heart:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+}
+
+/* Liked state */
+.heart.liked {
+  color: #e63946;
+}
+
+/* Container for difficulty badge at bottom-left of image */
+.overlay {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+}
+
+/* Difficulty label chip */
+.difficulty {
+  padding: 6px 10px;
+  border-radius: 10px;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+/* Card content body */
+.card-body {
+  padding: 16px;
+}
+
+.card-title {
+  margin: 0 0 10px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* Calories and time row */
+.meta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  color: var(--muted-text);
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+/* Macro stat bars container */
+.stats {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+/* Label row for stat bars */
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted-text);
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+/* Stat bar background track */
+.progress {
+  height: 8px;
+  background: var(--muted-bg);
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+/* Stat bar fill */
+.progress-fill {
+  height: 100%;
+}
+
+/* Color variants for each macro type */
+.progress--protein .progress-fill {
+  background: #3b82f6; /* blue */
+}
+
+.progress--carbs .progress-fill {
+  background: #22c55e; /* green */
+}
+
+.progress--fats .progress-fill {
+  background: #f59e0b; /* orange */
+}
+
+/* Key ingredients header */
+.keys-title {
+  margin: 0 0 8px;
+  color: var(--muted-text);
+  font-size: 14px;
+}
+
+/* Chips row for key ingredients */
+.chips {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Individual chip */
+.chip {
+  background: var(--muted-bg-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 999px;
+}
+
+/* Generic padded container helper */
+.container-padded {
+  padding: 20px;
+}
+
+/* Wrapper button that makes the entire card clickable */
+.card-link {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: inherit;
+  color: inherit;
+  width: 100%;
+  cursor: pointer;
+}
+
+/* Hover effect on whole card when wrapper is hovered */
+.card-link:hover .card {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* Respect prefers-reduced-motion setting */
+@media (prefers-reduced-motion: reduce) {
+  .heart {
+    transition: none;
+  }
+  .card {
+    transition: none;
+  }
+}
+
+/* 
+   LANDING PAGE STYLES (MacroTok)
+   -------------------------------------------------------------
+   Header, hero, features, how-it-works, and footer sections.
+   */
+
+/* Root container for the landing page */
+.landing {
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+/* -------------------------------------------------------------
+   HEADER (Landing)
+   ------------------------------------------------------------- */
+
+.landing__header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in oklab, var(--bg) 90%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+/* Brand container */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+}
+
+/* Brand dot left of the name */
+.brand__dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 40%, transparent);
+}
+
+/* Brand text */
+.brand__name {
+  letter-spacing: 0.2px;
+}
+
+/* Navigation menu in header */
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Individual nav link */
+.nav__link {
+  color: var(--muted-text);
+  text-decoration: none;
+  padding: 8px 10px;
+  border-radius: 10px;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+/* Nav link hover state */
+.nav__link:hover {
+  background: var(--card-bg);
+  color: var(--text);
+}
+
+/* -------------------------------------------------------------
+   LANDING BUTTON OVERRIDES
+   Reuses global .btn, adjusts radius and sizes.
+   ------------------------------------------------------------- */
+
+.btn {
+  border-radius: 12px;
+}
+
+/* Ghost button on Landing header */
+.btn--ghost {
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Filled button uses accent color */
+.btn--filled {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+}
+
+/* Large button for primary CTAs */
+.btn--lg {
+  padding: 12px 18px;
+  border-radius: 14px;
+  font-weight: 600;
+}
+
+/* -------------------------------------------------------------
+   HERO SECTION (Landing)
+   ------------------------------------------------------------- */
+
+.hero {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 28px;
+  padding: 48px 20px;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+/* Hero heading */
+.hero__title {
+  font-size: clamp(28px, 5vw, 44px);
+  margin: 0 0 10px;
+}
+
+/* Hero subtitle text */
+.hero__subtitle {
+  color: var(--muted-text);
+  max-width: 56ch;
+}
+
+/* CTA button row */
+.hero__cta {
+  display: flex;
+  gap: 10px;
+  margin: 18px 0 8px;
+}
+
+/* Bullet list of hero points */
+.hero__points {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  color: var(--muted-text);
+}
+
+.hero__points li {
+  margin: 6px 0;
+}
+
+/* -------------------------------------------------------------
+   HERO PREVIEW CARD (optional demo card in Hero)
+   ------------------------------------------------------------- */
+
+.hero__card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-elevated);
+  overflow: hidden;
+  align-self: start;
+}
+
+/* Preview card header dots (traffic-light style) */
+.card__header {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Generic dot style */
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* Traffic light colors */
+.red {
+  background: #ff5f57;
+}
+.yellow {
+  background: #febc2e;
+}
+.green {
+  background: #28c840;
+}
+
+/* Preview card body */
+.card__body {
+  padding: 16px;
+  display: grid;
+  gap: 16px;
+}
+
+/* Kcal label in preview card */
+.kcal__label {
+  color: var(--muted-text);
+  font-size: 12px;
+}
+
+/* Kcal numeric value */
+.kcal__value {
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+/* Kcal bar container */
+.kcal__bar {
+  height: 10px;
+  background: var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+/* Kcal bar fill */
+.kcal__bar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+/* Grid of mini tiles (Breakfast, Lunch, etc.) */
+.mini-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+/* Single mini tile */
+.mini-tile {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  background: color-mix(in oklab, var(--card-bg) 90%, transparent);
+}
+
+.mini-tile__title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.mini-tile__text {
+  color: var(--muted-text);
+  font-size: 14px;
+}
+
+/* Row of actions at bottom of hero preview card */
+.card__actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* -------------------------------------------------------------
+   HERO IMAGE / SLIDESHOW
+   ------------------------------------------------------------- */
+
+.hero__image {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.8s ease-in-out;
+}
+
+/* Main hero image element */
+.hero__img {
+  width: 100%;
+  max-width: 460px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-elevated);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Hover zoom on hero image */
+.hero__img:hover {
+  transform: scale(1.03);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+}
+
+/* Slideshow controls under the image */
+.hero__controls {
+  position: absolute;
+  inset: auto 0 12px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Previous/next buttons */
+.ctrl {
+  border-radius: 999px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text);
+  cursor: pointer;
+}
+
+/* Dot indicators for slideshow */
+.dots {
+  display: flex;
+  gap: 6px;
+}
+
+/* Dot base style */
+.dots .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--border);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* Active slideshow dot */
+.dots .dot.dot--active {
+  background: var(--accent);
+}
+
+/* Simple fade-in keyframe used for hero animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* -------------------------------------------------------------
+   FEATURES SECTION (Landing)
+   ------------------------------------------------------------- */
+
+.features {
+  padding: 48px 20px;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.section__title {
+  font-size: 24px;
+  margin: 0 0 18px;
+}
+
+/* Grid of feature cards */
+.features__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+/* Single feature card */
+.feature {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow-elevated);
+}
+
+.feature__icon {
+  font-size: 22px;
+}
+
+.feature__title {
+  margin: 8px 0 4px;
+}
+
+.feature__text {
+  color: var(--muted-text);
+}
+
+/* -------------------------------------------------------------
+   HOW IT WORKS SECTION (Landing)
+   ------------------------------------------------------------- */
+
+.how {
+  padding: 24px 20px 48px;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+/* Steps are shown in a 3-column grid on larger screens */
+.steps {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+/* Single step card */
+.step {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  box-shadow: var(--shadow-elevated);
+}
+
+/* Step number badge */
+.step span {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+/* -------------------------------------------------------------
+   FOOTER (Landing)
+   ------------------------------------------------------------- */
+
+.footer {
+  padding: 30px 20px;
+  border-top: 1px solid var(--border);
+}
+
+/* Footer row aligns text and links */
+.footer__row {
+  max-width: 1080px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--muted-text);
+}
+
+/* Footer navigation links */
+.footer__links {
+  display: flex;
+  gap: 12px;
+}
+
+.footer__links a {
+  color: var(--muted-text);
+  text-decoration: none;
+}
+
+.footer__links a:hover {
+  color: var(--text);
+}
+
+/* -------------------------------------------------------------
+   RESPONSIVE BEHAVIOR (Landing)
+   ------------------------------------------------------------- */
+
+@media (max-width: 920px) {
+  /* Stack hero columns on smaller screens */
+  .hero {
+    grid-template-columns: 1fr;
+  }
+
+  /* Use 2-column layout for features */
+  .features__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Stack steps vertically */
+  .steps {
+    grid-template-columns: 1fr;
+  }
+}
+
+/*
+   RECIPE DETAIL PAGE
+   -------------------------------------------------------------
+   Layout for the detailed recipe view (image + ingredients + steps).
+    */
+
+.recipe-detail {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Empty state message styling */
+.recipe-detail--empty {
+  text-align: left;
+}
+
+/* Back button area */
+.recipe-detail__back {
+  margin-bottom: 12px;
+}
+
+/* Header layout: recipe info on left, image on right */
+.recipe-detail__header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+@media (max-width: 800px) {
+  .recipe-detail__header {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Title styling */
+.recipe-detail__title {
+  margin: 8px 0;
+}
+
+/* Meta line (calories, time, difficulty) */
+.recipe-detail__meta {
+  color: var(--muted-text);
+  margin: 0 0 12px;
+}
+
+/* Ingredients list spacing */
+.recipe-detail__ingredients ul {
+  margin-top: 8px;
+  padding-left: 20px;
+}
+
+/* Image container with overlay */
+.recipe-detail__image {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: var(--shadow-elevated);
+}
+
+/* Recipe image itself */
+.recipe-detail__img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+/* Small pill badge on image (View Steps / Hide Steps) */
+.recipe-detail__badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #ffffff;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  user-select: none;
+}
+
+/* Overlay panel for directions shown over the image */
+.recipe-detail__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  color: #ffffff;
+  padding: 16px;
+  opacity: 0;
+  transition: opacity 180ms ease;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Visible overlay state */
+.recipe-detail__overlay--visible {
+  opacity: 1;
+}
+
+/* Overlay heading */
+.recipe-detail__overlay h3 {
+  margin: 0 0 8px;
+}
+
+/* Scrollable list of steps within overlay */
+.recipe-detail__overlay-list {
+  margin: 0;
+  padding-left: 18px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  line-height: 1.4;
+}
+
+/* Hint at bottom of overlay */
+.recipe-detail__overlay-hint {
+  margin-top: auto;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+/* Content section under the header (directions) */
+.recipe-detail__section {
+  margin-top: 24px;
+}
+
+/* Directions list */
+.recipe-detail__steps {
+  margin-top: 8px;
+  padding-left: 20px;
+}
+
+.recipe-detail__steps li {
+  margin: 8px 0;
+}
+
+/* 
+   ADDITIONAL LAYOUT HELPERS
+    */
+
+/* Generic main content padding */
+.main {
+  padding: 20px;
+}
+
+/* 
+   GLOBAL APP LAYOUT (Sidebar + Main)
+   -------------------------------------------------------------
+   Flex layout for pages that use the sidebar.
+    */
+
+.layout {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* Main content area next to sidebar */
+.layout-main {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Planner page header row (title + navigation buttons) */
+.planner-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+/* Planner page header actions */
+.planner-header__actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Buttons row above the calendar on Planner page */
+.planner-buttons {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0 20px;
+}
+
+/* Ensure calendar and goal cards match global theme colors */
+.cal-card,
+.goal-card {
+  background: var(--panel);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+/* 
+   GLOBAL THEME TOGGLE (Floating Button)
+   -------------------------------------------------------------
+   Duplicate definition here to ensure consistent visual style.
+ */
+
+.theme-toggle {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 1000;
+}
+
+.theme-toggle__btn {
+  border-radius: 999px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* 
+   SIDEBAR STYLES (Global)
+   -------------------------------------------------------------
+   Sidebar layout and navigation item styling.
+    */
+
+.sidebar {
+  width: 260px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Individual sidebar item (button) */
+.sb-item {
+  background: transparent;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+/* Active sidebar item */
+.sb-item.active {
+  background: var(--accent);
+  color: white;
+}
+
+/* Hover state on sidebar item */
+.sb-item:hover {
+  background: color-mix(in oklab, var(--accent) 12%, transparent);
+}
+
+/* Profile section at bottom of sidebar */
+.sb-profile {
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 12px;
+  color: var(--muted);
+}
+
+/* Circular avatar placeholder */
+.sb-avatar {
+  width: 36px;
+  height: 36px;
+  background: var(--accent);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+}
