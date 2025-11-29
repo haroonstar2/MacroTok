@@ -1,6 +1,10 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Recipe({ recipe, onBack }) {
+
+  const navigate = useNavigate();
+
   if (!recipe) {
     return (
       <main style={{ padding: 24 }}>
@@ -13,24 +17,12 @@ export default function Recipe({ recipe, onBack }) {
   return (
     <main style={{ maxWidth: 860, margin: "0 auto", padding: 24 }}>
       <button
-  className="btn btn--outline"
-  onClick={() => {
-    // ✅ If this was opened in a new tab
-    if (window.opener) {
-      window.close();
-    } else {
-      // Fallback: remove query and go to Feed
-      const url = new URL(window.location.href);
-      url.searchParams.delete("recipe");
-      window.history.replaceState({}, "", url.toString());
-      window.location.reload();
-    }
-  }}
-  style={{ marginBottom: 12 }}
->
-  ← Back
-</button>
-
+        className="btn btn--outline"
+        onClick={() => {navigate("/feed")}}
+        style={{ marginBottom: 12 }}
+      >
+        ← Back
+      </button>
 
       <header style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
         <div>

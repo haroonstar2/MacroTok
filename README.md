@@ -14,6 +14,18 @@ Plain CSS
 Hooks + Component-based state management
 No backend required (local mock recipe DB)
 Optional API setup ready for expansion
+Overview
+
+MacroTok is a React-based fitness & nutrition planner that helps users schedule meals, track calorie intake, and discover macro-balanced recipes — all in one clean interface.
+this readME combines a Landing Page, Feed Page, Calendar Planner, Goal Tracker, and Recipe Detail View
+
+Tech Stack
+React 18
+Vite
+Plain CSS
+Hooks + Component-based state management
+No backend required (local mock recipe DB)
+Optional API setup ready for expansion
 ##  Quick Start
 ```bash
 npm install

@@ -5,12 +5,12 @@
  * like buttons, and search bar for filtering recipes 
  * 
  * Fiyori Demewez
- 
  */
 
-
 import React, { useState } from "react";
-import "./feed.css"; // Import external styling 
+import { useNavigate } from "react-router-dom";
+import "./feed.css"; // Import external styling ;
+import Recipe from "../recipes/Recipe.jsx";
 import { RECIPES } from "../../store/temp_recipes.js";
 
 // ---- Recipe Images ---- taken from allRecipe this mock placeholder 
@@ -105,14 +105,18 @@ function HeartButton({ onClick }) {
 
 
 function RecipeCard({ recipe }) {
+  const navigate = useNavigate();
   const {
     id, title, calories, time, img, protein, carbs, fats, ingredients, level
   } = recipe;
 
+  // const openDetail = () => {
+  //   const url = new URL(window.location.href);
+  //   url.searchParams.set("recipe", id); // e.g., ?recipe=grilled-chicken-salad-fruit
+  //   window.open(url.toString(), "_blank", "noopener,noreferrer"); // open detail in new tab
+  // };
   const openDetail = () => {
-    const url = new URL(window.location.href);
-    url.searchParams.set("recipe", id); // e.g., ?recipe=grilled-chicken-salad-fruit
-    window.open(url.toString(), "_blank", "noopener,noreferrer"); // open detail in new tab
+    navigate(`/recipe/${id}`);
   };
 
   return (

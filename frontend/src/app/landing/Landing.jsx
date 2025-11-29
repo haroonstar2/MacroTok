@@ -60,7 +60,8 @@ export default function Landing() {
       "https://img.freepik.com/free-photo/penne-pasta-tomato-sauce-with-chicken-tomatoes-wooden-table_2829-19739.jpg?semt=ais_hybrid&w=740&q=80",
       "https://media.hellofresh.com/f_auto,fl_lossy,q_auto/hellofresh_website/us/hp-homepage2025/Healthier-Made-Easier.png",
       "https://alittleinsanity.com/wp-content/uploads/2012/03/Natural-Breakfast-Smoothie-Recipe-Gluten-Free-Vegan-1024x683.jpg",
-      "https://joyfoodsunshine.com/wp-content/uploads/2020/03/smoothie-bowl-recipe-1-500x500.jpg"," https://www.allrecipes.com/thmb/GiaXx_OGXO0Oo_yhaLWpKW8YTtQ=/750x0/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/11706191_High-Protein-Broccoli-Cheddar-Soup_Nicole-Russell_4x3-e2eaaaf242a149de950b3dc0b066833c.jpg"," "
+      "https://joyfoodsunshine.com/wp-content/uploads/2020/03/smoothie-bowl-recipe-1-500x500.jpg",
+      "https://www.allrecipes.com/thmb/GiaXx_OGXO0Oo_yhaLWpKW8YTtQ=/750x0/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/11706191_High-Protein-Broccoli-Cheddar-Soup_Nicole-Russell_4x3-e2eaaaf242a149de950b3dc0b066833c.jpg",
     ],
     []
   );
@@ -111,9 +112,6 @@ export default function Landing() {
         </div>
 
         <nav className="nav" aria-label="Main navigation">
-          <a href="#features" className="nav__link">Features</a>
-          <a href="#how" className="nav__link">How it works</a>
-          <a href="#faq" className="nav__link">FAQ</a>
 
           {/* Dark / Light mode toggle button */}
           <button
@@ -127,7 +125,6 @@ export default function Landing() {
 
           {/* Auth buttons */}
           <a className="btn btn--outline" href="/login">Log in</a>
-          <a className="btn btn--filled" href="/signup">Sign up</a>
         </nav>
       </header>
 
@@ -142,8 +139,7 @@ export default function Landing() {
         <div className="hero__copy">
           <h1 className="hero__title">Plan meals that fit your life.</h1>
           <p className="hero__subtitle">
-            Schedule recipes, track intake (e.g.,{" "}
-            <strong>1600/1900 kcal</strong>), and review weekly or monthly — all
+            Schedule recipes, track intake and review weekly or monthly — all
             in one clean dashboard.
           </p>
 
@@ -151,9 +147,6 @@ export default function Landing() {
           <div className="hero__cta">
             <a className="btn btn--filled btn--lg" href="/calendar">
               Open Calendar
-            </a>
-            <a className="btn btn--outline btn--lg" href="#features">
-              See Features
             </a>
           </div>
 
@@ -221,7 +214,7 @@ export default function Landing() {
           -----------------------------------------------------
           - Highlights 4 main capabilities of MacroTok
       ===================================================== */}
-      <section id="features" className="features">
+      <section className="features">
         <h2 className="section__title">What you can do</h2>
 
         <div className="features__grid">
@@ -265,7 +258,7 @@ export default function Landing() {
           -----------------------------------------------------
           - Simple 3-step explanation for new users
       ===================================================== */}
-      <section id="how" className="how">
+      <section className="how">
         <h2 className="section__title">How it works</h2>
         <ol className="steps">
           <li className="step"><span>1</span> Add your meals to the Calendar</li>

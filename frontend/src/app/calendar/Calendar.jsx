@@ -1,29 +1,29 @@
 import React, { useMemo, useState } from "react";
 import "./global.css";
-import {
-  // Importing icons from lucide-react (these are SVG icons you can use like React components)
 
-  ChevronLeft,   // Left arrow (used for Previous month)
-  ChevronRight,  // Right arrow (used for Next month)
+import {
+  // Importing icons from lucide-react (these are SVG icons that are like React components)
+  ChevronLeft,   // Left arrow 
+  ChevronRight,  // Right arrow 
   Plus,          //Plus sign for Add Schedule
   Calendar as CalendarIcon,   // Calandar image used for add to calandar 
   Edit,                        // edit pencil for edit slot
-  Trash2,                      // trash can for delete /remove
-  Coffee,                      // coffe  for brekfast 
+  Trash2,                      // trash can for delete/remove
+  Coffee,                      // coffee for brekfast 
   Utensils,                    // fork and knife used for lunch 
   UtensilsCrossed,             // crossed utensils used for dinner
 } from "lucide-react";
 import { motion } from "framer-motion";
-/* calandar with no typescript and extrenal UI kit 
- We start at December 2025.
-   * Note: JavaScript months are 0-indexed (0 = Jan, 11 = Dec).
-   */
-export default function Calendar({ activeDay = 1, onPickDay = () => {} }) {
-  const [monthIndex, setMonthIndex] = useState(11); //11 December
-  const [year, setYear] = useState(2025); // start in current year 2025 
+const today = new Date();
+
+//JavaScript months are 0-indexed (0 = Jan, 11 = Dec).
+export default function Calendar({ activeDay, onPickDay = () => {} }) {
+  const [monthIndex, setMonthIndex] = useState(today.getMonth()); 
+  const [year, setYear] = useState(today.getFullYear());
   const [mealsByDay, setMealsByDay] = useState({});
   const [isOpen, setIsOpen] = useState(false); //Controls the "Schedule Recipe" dialog open/close
   const [modalMode, setModalMode] = useState("add"); // add | edit | remove
+
 // new Date(y, m + 1, 0) gives the last day of the month
   const daysInMonth = useMemo(
     () => new Date(year, monthIndex + 1, 0).getDate(),
@@ -45,22 +45,20 @@ export default function Calendar({ activeDay = 1, onPickDay = () => {} }) {
   }, [daysInMonth, firstWeekday]);
 
   const MONTHS = [
-    // Names of months — simple arrays we can reuse
     "January","February","March","April","May","June",
     "July","August","September","October","November","December",
   ];
-  //// Names of weekdays  — simple arrays we can reuse
   const WEEKDAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-//Go to the previous month. If we are on January, we jump to December of the previous year.
+// Go to the previous month. If we are on January, we jump to December of the previous year.
 
-function prevMonth() {
+ function prevMonth() {
     if (monthIndex === 0) {
       setMonthIndex(11);
       setYear((y) => y - 1);
     } else setMonthIndex((m) => m - 1);
-  }
-  //Go to the next month. If we are on December, we jump to January of the next year.
-  
+ }
+
+// Go to the next month. If we are on December, we jump to January of the next year.
   function nextMonth() {
     if (monthIndex === 11) {
       setMonthIndex(0);
@@ -107,7 +105,6 @@ function prevMonth() {
   }
 
   const dayMeals = mealsByDay[activeDay];
-  const today = new Date();
 
   function isToday(d) {
     return (
@@ -140,6 +137,7 @@ function prevMonth() {
         </button>
       );
     };
+    
     return (
       <div className="cal-modal-buttons">
         <Btn
