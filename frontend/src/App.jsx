@@ -14,6 +14,7 @@
 
 import React, { useState } from "react";
 
+import MacroTokLogin from "./app/login/MacroTokLogin"
 import Calendar from "./app/calendar/Calendar";
 import Goal from "./app/calendar/Goal";
 import Landing from "./app/landing/Landing";
@@ -24,8 +25,8 @@ import { RECIPES } from "./store/temp_recipes";
 import "./app/sidebar/sidebar.css";
 
 export default function App() {
-  // ✅ ALWAYS call hooks at the top, unconditionally
-  const [view, setView] = useState("landing"); // "landing" | "planner" | "feed"
+  // ALWAYS call hooks at the top, unconditionally
+  const [view, setView] = useState("landing"); // "landing" | "planner" | "feed" | "sign-in" 
   const [selectedDay, setSelectedDay] = useState(1);
   const [mealData, setMealData] = useState({
     breakfast: { calories: 0 },
@@ -84,10 +85,19 @@ export default function App() {
           <button className="btn btn--outline" onClick={() => setView("feed")}>
             Open Feed
           </button>
+          <button className="btn btn--outline" onClick={() => setView("sign-in")}>
+            Sign In
+          </button>
+
         </div>
       </>
     );
   }
+
+  // ---- SIGN IN ----
+  if (view === "sign-in") {
+    return <MacroTokLogin />;
+}
 
   // ---- FEED ----
   if (view === "feed") {
