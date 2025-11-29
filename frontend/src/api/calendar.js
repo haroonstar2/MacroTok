@@ -1,6 +1,6 @@
 import { api } from "./client";
 import { USE_MOCKS } from "../config";
-import * as mock from "../mocks/calendar.mock";
+import * as mock from "../app/calendar/mocks/calendar.mock.js";
 
 /**
  * Calendar API — switch between mock and real backend.

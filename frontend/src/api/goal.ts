@@ -1,12 +1,12 @@
 import { api } from "./client";
 import { USE_MOCKS } from "../config";
-import * as mock from "../mocks/goal.mock";
+import * as mock from "../app/calendar/mocks/goal.mock.js";
 
 export function getGoal() {
   return USE_MOCKS ? mock.getGoal() : api(`/goal`);
 }
 
-export function putGoal(dailyGoal) {
+export function putGoal(dailyGoal: any) {
   return USE_MOCKS
     ? mock.putGoal(dailyGoal)
     : api(`/goal`, {
