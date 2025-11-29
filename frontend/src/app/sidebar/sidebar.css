@@ -48,6 +48,8 @@
      ============================================================ */
   .sidebar {
     width: 260px;
+    min-width: 250px;      /* prevents shrinking */
+    flex-shrink: 0; 
     background: var(--sb-bg);
     border-right: 1px solid var(--sb-ring);
     box-shadow: var(--sb-shadow);
@@ -70,6 +72,7 @@
     font-weight: 700;
     font-size: 20px;
     margin: 6px 8px 16px;
+    cursor: pointer;
   }
   
   /* ============================================================
