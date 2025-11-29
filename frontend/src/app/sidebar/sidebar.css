@@ -1,0 +1,177 @@
+/* ============================================================
+   SIDEBAR STYLES (MacroTok)
+   ------------------------------------------------------------
+   Includes:
+     - Theme variables
+     - Layout wrapper (sidebar + main)
+     - Sidebar panel, navigation, and profile section
+   ============================================================ */
+
+/* ============================================================
+   THEME VARIABLES
+   ------------------------------------------------------------
+   Define sidebar color palette and common UI tokens.
+   Adjust these for dark mode or branding tweaks.
+   ============================================================ */
+   :root {
+    --sb-bg: #fff;                              /* Sidebar background */
+    --sb-ring: #e2e5e9;                         /* Divider & border color */
+    --sb-muted: #6b7280;                        /* Muted text (sub-labels) */
+    --sb-brand: #22c55e;                        /* Brand accent (green) */
+    --sb-chip: #f1f2f4;                         /* Soft gray for inactive bg */
+    --sb-shadow: 0 6px 18px rgba(16, 24, 40, .06); /* Subtle elevation */
+  }
+  
+  /* ============================================================
+     LAYOUT WRAPPER
+     ------------------------------------------------------------
+     Flexbox container that holds both the sidebar and the main
+     content area side-by-side.
+     ============================================================ */
+  .layout {
+    display: flex;
+    min-height: 100vh;
+    background: #f6f7f8; /* page background behind main area */
+  }
+  
+  /* Main content column next to sidebar */
+  .main {
+    flex: 1;             /* fill remaining width */
+    padding: 20px;       /* consistent page spacing */
+  }
+  
+  /* ============================================================
+     SIDEBAR PANEL
+     ------------------------------------------------------------
+     Vertical fixed sidebar with navigation and profile info.
+     Uses sticky positioning so it stays visible while scrolling.
+     ============================================================ */
+  .sidebar {
+    width: 260px;
+    min-width: 250px;      /* prevents shrinking */
+    flex-shrink: 0; 
+    background: var(--sb-bg);
+    border-right: 1px solid var(--sb-ring);
+    box-shadow: var(--sb-shadow);
+  
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100vh; /* full viewport height */
+    padding: 20px 16px;
+  }
+  
+  /* ============================================================
+     BRAND HEADER
+     ------------------------------------------------------------
+     Simple "MacroTok" title displayed at top of sidebar.
+     ============================================================ */
+  .sb-brand {
+    color: #22a35a;     /* slightly darker brand green */
+    font-weight: 700;
+    font-size: 20px;
+    margin: 6px 8px 16px;
+    cursor: pointer;
+  }
+  
+  /* ============================================================
+     NAVIGATION LIST
+     ------------------------------------------------------------
+     List of navigation buttons with icons.
+     Includes divider line separating brand from nav items.
+     ============================================================ */
+  .sb-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--sb-ring);
+  }
+  
+  /* ============================================================
+     NAV ITEM
+     ------------------------------------------------------------
+     Each button in sidebar navigation.
+     - Displays icon and label horizontally
+     - Rounded, clickable with hover & active feedback
+     ============================================================ */
+  .sb-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 18px;
+  
+    border: 1px solid transparent;
+    background: #fff;
+    color: #1f2937;
+    text-align: left;
+    cursor: pointer;
+  
+    transition: box-shadow .15s ease, transform .02s ease;
+  }
+  
+  /* Hover: light shadow feedback */
+  .sb-item:hover {
+    box-shadow: var(--sb-shadow);
+  }
+  
+  /* Active (selected) state — green gradient highlight */
+  .sb-item.active {
+    background: linear-gradient(90deg, #34d399, #22c55e);
+    color: #fff;
+  }
+  
+  /* Active icon stroke color override (white for contrast) */
+  .sb-item.active .sb-icn svg {
+    stroke: #fff;
+  }
+  
+  /* Icon container */
+  .sb-icn {
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    color: inherit; /* inherits color from parent state */
+  }
+  
+  /* ============================================================
+     PROFILE BLOCK (BOTTOM SECTION)
+     ------------------------------------------------------------
+     Displays user avatar, name, and a small label.
+     Pinned to bottom using margin-top:auto.
+     ============================================================ */
+  .sb-profile {
+    margin-top: auto; /* push to bottom */
+    padding: 16px;
+    border-top: 1px solid var(--sb-ring);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  /* Circular avatar with gradient background */
+  .sb-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(90deg, #34d399, #22c55e);
+  }
+  
+  /* Profile name/title */
+  .sb-profile-title {
+    font-weight: 600;
+  }
+  
+  /* Subtext (e.g., “View stats”) */
+  .sb-profile-sub {
+    color: var(--sb-muted);
+    font-size: 12px;
+  }
+  
