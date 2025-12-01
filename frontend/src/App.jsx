@@ -36,8 +36,11 @@ import Goal from "./app/calendar/Goal";
 import Landing from "./app/landing/Landing";
 import Feed from "./app/feed/Feed";
 import Sidebar from "./app/sidebar/Sidebar";
-import Recipe from "./app/recipes/Recipe";
-import { RECIPES } from "./store/temp_recipes";
+import RecipeView from "./app/recipes/RecipeView";
+import Recipes from "./app/recipes/recipes"; // temp to component to check spoonacular connection
+import useRecipesStore from "./store/recipeStore";
+// import { RECIPES } from "./store/temp_recipes";
+import { MOCK_SPOONACULAR_RECIPES } from "./store/mock_spoonacular_recipes";
 import "./app/sidebar/sidebar.css";
 import "./App.css";
 
@@ -142,10 +145,13 @@ function PlannerPage() {
 
 function RecipePage() {
   const { id } = useParams();
-  const recipe = RECIPES.find((r) => String(r.id) === String(id));
+
+  const recipes = useRecipesStore((state) => state.recipes); // Get all recipes currently loaded
+
+  const recipe = MOCK_SPOONACULAR_RECIPES.find((r) => String(r.id) === String(id));
   const navigate = useNavigate();
 
-  return <Recipe recipe={recipe} onBack={() => navigate(-1)} />;
+  return <RecipeView recipe={recipe} onBack={() => navigate(-1)} />;
 }
 
 // --------------- App (Global Theme) ----------
@@ -176,6 +182,7 @@ export default function App() {
           <Route path="/login" element={<MacroTokLogin />}/>
 
           <Route element={<AppLayout/>}>
+            <Route path="/test" element={<Recipes/>} />
             <Route path="/feed" element={<Feed />} />
             <Route path="/calendar" element={<PlannerPage />} />
             <Route path="/recipe/:id" element={<RecipePage />} />
