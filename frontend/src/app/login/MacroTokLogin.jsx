@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "./login.css";
+import "../style.css"; // ensures the original layout CSS is applied
 
 export default function MacroTokLogin() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -38,7 +38,7 @@ export default function MacroTokLogin() {
           />
         </div>
 
-        <div className="container-5">
+       <div className={`container-5 ${isSignUp ? "expanded" : ""}`}>
           <div className="container-6">
             <div className="paragraph">
               <p className="text-wrapper">
