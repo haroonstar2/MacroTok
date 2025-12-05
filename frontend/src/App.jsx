@@ -41,6 +41,7 @@ import Recipes from "./app/recipes/recipes"; // temp to component to check spoon
 import useRecipesStore from "./store/recipeStore";
 // import { RECIPES } from "./store/temp_recipes";
 import { MOCK_SPOONACULAR_RECIPES } from "./store/mock_spoonacular_recipes";
+import { ACTUAL_SPOONACULAR_RECIPES } from "./store/actual_spoonacular_recipes";
 import "./app/sidebar/sidebar.css";
 import "./App.css";
 
@@ -147,8 +148,10 @@ function RecipePage() {
   const { id } = useParams();
 
   const recipes = useRecipesStore((state) => state.recipes); // Get all recipes currently loaded
+  // const recipe = recipes.find((r) => String(r.id) === String(id));
 
-  const recipe = MOCK_SPOONACULAR_RECIPES.find((r) => String(r.id) === String(id));
+  // const recipe = MOCK_SPOONACULAR_RECIPES.find((r) => String(r.id) === String(id));
+  const recipe = ACTUAL_SPOONACULAR_RECIPES.find((r) => String(r.id) === String(id));
   const navigate = useNavigate();
 
   return <RecipeView recipe={recipe} onBack={() => navigate(-1)} />;
