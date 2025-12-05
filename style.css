@@ -247,7 +247,7 @@
 }
 
 .modern-login-page .text-wrapper-3 {
-  position: absolute;
+
   top: 12px;
   left: 130px;
   font-family: "Arimo-Regular", Helvetica;
@@ -521,9 +521,9 @@
 .modern-login-page .paragraph-2 {
    display: flex;
   justify-content: center;
-  gap: 6px;       
+  gap: 8px;       
   width: 100%;
-  margin-top: 8px;
+  margin-top: 10px;
 }
 
 .modern-login-page .don-t-have-an {
@@ -539,9 +539,9 @@
 }
 
 .modern-login-page .text-wrapper-8 {
-  margin-top: -2px;
+  margin-top: -3.5px;
   width: 55px;
-  height: 24px;
+  height: 23px;
   font-size: 16px;
   line-height: 24px;
   font-family: "Arimo-Regular", Helvetica;
@@ -561,7 +561,7 @@
 .modern-login-page .p {
   position: absolute;
   top: -1px;
-  left: 6px;
+  left: 1px;
   width: 171px;
   font-family: "Arimo-Regular", Helvetica;
   font-weight: 400;
@@ -575,11 +575,11 @@
 .modern-login-page .link {
   display: flex;
   width: 86px;
-  height: 16px;
+  height: 11px;
   align-items: flex-start;
   position: absolute;
   top: 0;
-  left: 177px;
+  left: 172px;
 }
 
 .modern-login-page .text-wrapper-9 {
@@ -600,7 +600,7 @@
 
 .modern-login-page .text-wrapper-10 {
   position: absolute;
-  top: -1px;
+  top: -px;
   left: 262px;
   width: 27px;
   font-family: "Arimo-Regular", Helvetica;
@@ -1076,4 +1076,32 @@
 /* Remove bottom blue rectangle artifact */
 .modern-login-page .img {
   display: none !important;
+}
+.google-btn {
+  width: 100%;
+  height: 48px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0px 4px 16px rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.google-btn:hover {
+  background-color: #f5f5f5;
+  transform: translateY(-1px);
+}
+
+.google-btn:active {
+  transform: scale(0.98);
+}
+
+.google-icon {
+  width: 18px;
+  height: 18px;
 }

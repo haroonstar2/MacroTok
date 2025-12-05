@@ -53,22 +53,20 @@ export default function MacroTokLogin() {
             </div>
           </div>
 
-          <button className="button" type="button">
-            <img
-              className="icon"
-              src="https://c.animaapp.com/jsUBuoxq/img/icon.svg"
-              alt="Google"
-            />
-            <div className="text-wrapper-3">
-              {isSignUp ? "Sign up with Google" : "Continue with Google"}
-            </div>
-          </button>
-
-          <div className="div-wrapper">
-            <div className="text">
-              <div className="text-wrapper-4">or continue with email</div>
-            </div>
-          </div>
+          <button
+  type="button"
+  className="google-btn"
+  onClick={() => console.log("Google button clicked")}
+>
+  <img
+    className="google-icon"
+    src="https://c.animaapp.com/jsUBuoxq/img/icon.svg"
+    alt="Google"
+  />
+  <span className="text-wrapper-3">
+    {isSignUp ? "Sign up with Google" : "Continue with Google"}
+  </span>
+</button>
 
           <form className="form" onSubmit={handleSubmit}>
             {isSignUp && (
