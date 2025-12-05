@@ -1,5 +1,26 @@
 import React, { useState } from "react";
 import "./login.css";
+import { useNavigate } from "react-router";
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { 
+    getAuth,
+    onAuthStateChanged,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    signInWithPopup,
+    GoogleAuthProvider,
+    sendPasswordResetEmail,
+    signOut
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+// --- 1. FIREBASE CONFIGURATION ---
+import { firebaseConfig } from "../../../../backend/firebaseConfig"
+
+// --- 2. INITIALIZE FIREBASE ---
+const app = initializeApp(firebaseConfig); // This now uses the imported config
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
 
 export default function MacroTokLogin() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -9,19 +30,86 @@ export default function MacroTokLogin() {
   const [name, setName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (isSignUp && password !== confirmPassword) {
-      alert("Passwords don't match");
+  const handleGoogleSignIn = async () => {
+    console.log("yo");
+    
+    try {
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+        console.log("Google sign in successful:", user);
+        alert("Success!", `Welcome, ${user.displayName}!`);
+        navigate("/feed");
+    } catch (error) {
+        console.error("Google sign in error:", error.code, error.message);
+        alert("Google Sign In Error", error.message);
+    }
+  }
+
+  const handleEmailSignIn = async () => {
+
+    if (!email || !password) {
+      alert("Error", "Please enter both email and password.");
       return;
     }
-    console.log(isSignUp ? "Sign up:" : "Sign in:", {
-      name,
-      email,
-      password,
-    });
-  };
+
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      console.log("Sign in successful:", userCredential.user);
+      alert("Success!", "You are now signed in.");
+      navigate("/feed");
+    } catch(error) {
+      console.error("Sign in error:", error.code, error.message);
+      if (error.code === "auth/invalid-credential" || error.code === "auth/wrong-password" || error.code === "auth/user-not-found") {
+          alert("Sign In Failed", "Invalid email or password. Please try again.");
+      } else {
+          alert("Sign In Error", error.message);
+      }
+    }
+  }
+
+  const handleSignUp = async () => {
+
+    if (!email || !password) {
+      alert("Sign Up Error: Please enter an email and password in the fields first.");
+      return;
+    }
+
+    if (password.length < 6) {
+      alert("Sign Up Error: Password must be at least 6 characters long.");
+      return;
+    }
+
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        console.log("Sign up successful:", userCredential.user);
+        alert("Account Created!", "Your account has been successfully created. You are now signed in.");
+        navigate("/feed")
+    } catch (error) {
+        console.error("Sign up error:", error.code, error.message);
+        if (error.code === "auth/email-already-in-use") {
+            alert("Sign Up Failed: This email address is already in use.");
+        } else {
+            alert("Sign Up Error", error.message);
+        }
+    }
+
+  }
+
+  const handleForgetPassword = async () => {
+    if (!email) {
+      alert("Password Reset: Please enter your email address in the email field first.");
+      return;
+    }
+    try {
+        await sendPasswordResetEmail(auth, email);
+        alert(`Check Your Email: A password reset link has been sent to ${email}.`);
+    } catch (error) {
+        console.error("Password reset error:", error);
+        alert(`Password Reset Error: ${error.message}`);
+    }
+  }
 
   return (
     <div className="modern-login-page">
@@ -53,7 +141,9 @@ export default function MacroTokLogin() {
             </div>
           </div>
 
-          <button className="button" type="button">
+          <button id="google-signin-btn" className="button" type="button"
+            onClick={handleGoogleSignIn}
+          >
             <img
               className="icon"
               src="https://c.animaapp.com/jsUBuoxq/img/icon.svg"
@@ -70,7 +160,16 @@ export default function MacroTokLogin() {
             </div>
           </div>
 
-          <form className="form" onSubmit={handleSubmit}>
+          <form className="form" 
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (isSignUp) {
+              handleSignUp();
+            } else {
+              handleEmailSignIn();
+            }
+          }}
+          >
             {isSignUp && (
               <div className="container-9">
                 <label className="label">Full Name</label>
@@ -103,7 +202,7 @@ export default function MacroTokLogin() {
                 <button
                   type="button"
                   className="button-2"
-                  onClick={() => alert("Forgot password clicked")}
+                  onClick={handleForgetPassword}
                 >
                   <div className="text-wrapper-6">Forgot password?</div>
                 </button>
