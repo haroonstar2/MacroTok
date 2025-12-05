@@ -172,9 +172,10 @@ export default function App() {
       <Router>
         {/* Global theme toggle – floating, doesn't push content down */}
         <div className="theme-toggle">
-          <button onClick={toggleTheme} className="theme-toggle__btn">
-            {isDark ? "☀️ Light Mode" : "🌙 Dark Mode"}
-          </button>
+          <button onClick={toggleTheme} className="theme-toggle__btn modern-toggle">
+          {isDark ? "☀️" : "🌙"}
+</button>
+
         </div>
 
         <Routes>
