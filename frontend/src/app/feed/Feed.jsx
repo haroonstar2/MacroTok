@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import "./feed.css"; // Import external styling ;
 import useRecipesStore from "../../store/recipeStore.js";
 import { MOCK_SPOONACULAR_RECIPES } from "../../store/mock_spoonacular_recipes.js";
+import { ACTUAL_SPOONACULAR_RECIPES } from "../../store/actual_spoonacular_recipes.js";
 
 // Infer a simple difficulty level from the recipe
 function getDifficulty(recipe) {
@@ -50,11 +51,11 @@ function StatBar({ label, value, unit, variant }) {
       <div className="stat-row">
         <span className="stat-label">{label}</span>
         <span className="stat-value">
-          {value}
+          {Math.trunc(value)}
+          {" "}
           {unit}
         </span>
       </div>
-      progress bar visualization 
       <div className={`progress ${variant ? `progress--${variant}` : ""}`}>
         <div
           className="progress-fill"
@@ -146,8 +147,8 @@ function RecipeCard({ recipe }) {
         <div className="card-body">
           <h3 className="card-title">{recipeDetails.title}</h3>
           <div className="meta">
-            <span>🔥 {recipeDetails.calories} calories</span>
-            <span>• ⏱ {recipeDetails.time} min</span>
+            <span>🔥 {Math.trunc(recipeDetails.calories)} calories</span>
+            <span>• ⏱ {recipeDetails.readyInMinutes} min</span>
           </div>
           <div className="stats">
             <StatBar label="Protein" value={recipeDetails.protein} unit="g" variant="protein" />
@@ -176,16 +177,16 @@ export default function Feed() {
   const getRandomRecipe = useRecipesStore((state) => state.getRandomRecipe);
   const setRandom = useRecipesStore((state => state.setRandom));
 
-  setRandom(4); // Number of new recipes that should be rendered when user scrolls down
 
   // useEffect(() => {
+  //     setRandom(4); // Number of new recipes that should be rendered when user scrolls down
   //     const loadRecipe = async () => {
   //       await getRandomRecipe();      
   //     }
   //     loadRecipe();
   //   }, []);
 
-    // if (recipe === null) {
+    // if (recipes.length === 0) {
     //   return <p>Something went wrong. Please try again. </p>
     // }
 
@@ -198,16 +199,15 @@ export default function Feed() {
       </section>
 
       <header className="feed-header">
-        <h2>Home</h2>
+        {/* <h2>Home</h2> */}
         <div className="search">
           <input placeholder="Search recipes..." />
         </div>
       </header>
 
-      // Replace your map with RECIPES
 <section className="grid">
-  {MOCK_SPOONACULAR_RECIPES.map((r) => (
-    <RecipeCard key={r.id} recipe={r} />
+  {ACTUAL_SPOONACULAR_RECIPES.map((r, index) => (
+    <RecipeCard key={r.id || index} recipe={r} />
   ))}
 </section>
     </div>
