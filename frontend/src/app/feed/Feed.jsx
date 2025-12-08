@@ -11,14 +11,13 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./feed.css"; // Import external styling ;
 import useRecipesStore from "../../store/recipeStore.js";
-import { MOCK_SPOONACULAR_RECIPES } from "../../store/mock_spoonacular_recipes.js";
-import { ACTUAL_SPOONACULAR_RECIPES } from "../../store/actual_spoonacular_recipes.js";
 
 // Infer a simple difficulty level from the recipe
 function getDifficulty(recipe) {
   const time = recipe.readyInMinutes;
-  const ingredients = recipe.extendedIngredients.length;
-  const steps = recipe.analyzedInstructions?.[0]?.steps?.length ?? 0;
+  const ingredients = recipe?.extendedIngredients?.length ?? 0;
+  const steps = recipe?.analyzedInstructions?.[0]?.steps?.length ?? 0;
+
 
   let score = 0;
 
@@ -114,12 +113,13 @@ function HeartButton({ onClick }) {
 
 
 function RecipeCard({ recipe }) {
+  
   const navigate = useNavigate();
 
   const recipeDetails = {
     id: recipe.id,
     title: recipe.title,
-    calories: recipe.nutrition?.nutrients?.find(n => n.name === "Calories")?.amount,
+    calories: Math.round(recipe.nutrition?.nutrients?.find(n => n.name === "Calories")?.amount ?? 0),
     readyInMinutes: recipe.readyInMinutes,
     image: recipe.image,
     protein: recipe.nutrition?.nutrients?.find(n => n.name === "Protein")?.amount,
@@ -130,6 +130,8 @@ function RecipeCard({ recipe }) {
   };
 
   const openDetail = () => {
+    console.log("we navigating yo", recipeDetails.id);
+    
     navigate(`/recipe/${recipeDetails.id}`);
   };
 
@@ -157,10 +159,15 @@ function RecipeCard({ recipe }) {
           </div>
           <div className="keys">
             <p className="keys-title">Key Ingredients</p>
-            <div className="chips">
-              {recipeDetails.ingredients.slice(0, 5).map((k) => <Chip key={k}>{k}</Chip>)}
-              {recipeDetails.ingredients.length > 5 && <Chip>+{recipeDetails.ingredients.length - 5} more</Chip>}
-            </div>
+           <div className="chips">
+             {(recipeDetails?.ingredients ?? [])
+              .slice(0, 5)
+              .map((k, idx) => <Chip key={idx}>{k}</Chip>)}
+              {(recipeDetails?.ingredients?.length ?? 0) > 5 && (
+              <Chip>+{recipeDetails.ingredients.length - 5} more</Chip>
+            )}
+          </div>
+
           </div>
         </div>
       </article>
@@ -171,31 +178,33 @@ function RecipeCard({ recipe }) {
 
 // ---- Feed Main Component ----
 export default function Feed() {
-
-  const recipe = useRecipesStore((state) => state.recipe);
+  //  All hooks stay INSIDE the component
   const recipes = useRecipesStore((state) => state.recipes);
-  const getRandomRecipe = useRecipesStore((state) => state.getRandomRecipe);
-  const setRandom = useRecipesStore((state => state.setRandom));
+  const loadRecipesFromFirestore = useRecipesStore(
+    (state) => state.loadRecipesFromFirestore
+  );
+  const setRandom = useRecipesStore((state) => state.setRandom);
+  const getRandomRecipe = useRecipesStore((state) => state.getRandomRecipe); // added
 
 
-  // useEffect(() => {
-  //     setRandom(4); // Number of new recipes that should be rendered when user scrolls down
-  //     const loadRecipe = async () => {
-  //       await getRandomRecipe();      
-  //     }
-  //     loadRecipe();
-  //   }, []);
+ useEffect(() => { //temp
+    getRandomRecipe();
+  }, []);
 
-    // if (recipes.length === 0) {
-    //   return <p>Something went wrong. Please try again. </p>
-    // }
+
+  useEffect(() => {
+    setRandom(4);               // optional, sets how many random recipes you fetch elsewhere
+    loadRecipesFromFirestore(); // loads saved recipes from Firestore into Zustand
+  }, [setRandom, loadRecipesFromFirestore]);
 
   return (
     <div className="feed">
       {/* --- Introduction Section --- */}
       <section className="intro">
         <h1 className="intro-title">Discover Macro-Friendly Recipes</h1>
-        <p className="intro-sub">Track your macros while enjoying delicious, balanced meals</p>
+        <p className="intro-sub">
+          Track your macros while enjoying delicious, balanced meals
+        </p>
       </section>
 
       <header className="feed-header">
@@ -205,11 +214,13 @@ export default function Feed() {
         </div>
       </header>
 
-<section className="grid">
-  {ACTUAL_SPOONACULAR_RECIPES.map((r, index) => (
-    <RecipeCard key={r.id || index} recipe={r} />
-  ))}
-</section>
+      {/* main grid uses recipes from our zustand */}
+      <section className="grid">
+        {recipes.map((r) => (
+          <RecipeCard key={r.id} recipe={r} />
+        ))}
+      </section>
     </div>
   );
 }
+

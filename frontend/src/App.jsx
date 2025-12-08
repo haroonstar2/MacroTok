@@ -39,9 +39,6 @@ import Sidebar from "./app/sidebar/Sidebar";
 import RecipeView from "./app/recipes/RecipeView";
 import Recipes from "./app/recipes/recipes"; // temp to component to check spoonacular connection
 import useRecipesStore from "./store/recipeStore";
-// import { RECIPES } from "./store/temp_recipes";
-import { MOCK_SPOONACULAR_RECIPES } from "./store/mock_spoonacular_recipes";
-import { ACTUAL_SPOONACULAR_RECIPES } from "./store/actual_spoonacular_recipes";
 import "./app/sidebar/sidebar.css";
 import "./App.css";
 
@@ -148,10 +145,7 @@ function RecipePage() {
   const { id } = useParams();
 
   const recipes = useRecipesStore((state) => state.recipes); // Get all recipes currently loaded
-  // const recipe = recipes.find((r) => String(r.id) === String(id));
-
-  // const recipe = MOCK_SPOONACULAR_RECIPES.find((r) => String(r.id) === String(id));
-  const recipe = ACTUAL_SPOONACULAR_RECIPES.find((r) => String(r.id) === String(id));
+  const recipe = recipes.find((r) => String(r.id) === String(id));
   const navigate = useNavigate();
 
   return <RecipeView recipe={recipe} onBack={() => navigate(-1)} />;
@@ -175,9 +169,10 @@ export default function App() {
       <Router>
         {/* Global theme toggle – floating, doesn't push content down */}
         <div className="theme-toggle">
-          <button onClick={toggleTheme} className="theme-toggle__btn">
-            {isDark ? "☀️ Light Mode" : "🌙 Dark Mode"}
-          </button>
+          <button onClick={toggleTheme} className="theme-toggle__btn modern-toggle">
+          {isDark ? "☀️" : "🌙"}
+</button>
+
         </div>
 
         <Routes>
