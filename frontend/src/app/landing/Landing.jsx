@@ -13,6 +13,36 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./Landing.css";
+import { auth } from "../../../../backend/firebaseConfig";
+import { onAuthStateChanged, signOut } from "firebase/auth"
+
+function AuthButton() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, []);
+
+  if (loading) return null;
+
+  return !user ? (
+    <a className="btn btn--outline" href="/login">
+      Log in
+    </a>
+  ) : (
+    <button
+      className="btn btn--outline"
+      onClick={() => signOut(auth)}
+    >
+      Log out
+    </button>
+  );
+}
 
 export default function Landing() {
   /* ==========================================================
@@ -124,7 +154,7 @@ export default function Landing() {
           </button>
 
           {/* Auth buttons */}
-          <a className="btn btn--outline" href="/login">Log in</a>
+          <AuthButton />
         </nav>
       </header>
 
@@ -286,3 +316,5 @@ export default function Landing() {
     </main>
   );
 }
+
+

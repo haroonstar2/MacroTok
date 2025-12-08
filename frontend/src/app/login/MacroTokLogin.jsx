@@ -1,25 +1,18 @@
 import React, { useState } from "react";
 import "./login.css";
 import { useNavigate } from "react-router";
+import { auth } from "../../../../backend/firebaseConfig";
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { 
-    getAuth,
-    onAuthStateChanged,
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     signInWithPopup,
     GoogleAuthProvider,
     sendPasswordResetEmail,
     signOut
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+} from "firebase/auth";
 
-// --- 1. FIREBASE CONFIGURATION ---
-import { firebaseConfig } from "../../../../backend/firebaseConfig"
-
-// --- 2. INITIALIZE FIREBASE ---
-const app = initializeApp(firebaseConfig); // This now uses the imported config
-const auth = getAuth(app);
+// INITIALIZE FIREBASE ---
 const provider = new GoogleAuthProvider();
 
 export default function MacroTokLogin() {
@@ -33,38 +26,37 @@ export default function MacroTokLogin() {
   const navigate = useNavigate();
 
   const handleGoogleSignIn = async () => {
-    console.log("yo");
     
     try {
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
         console.log("Google sign in successful:", user);
-        alert("Success!", `Welcome, ${user.displayName}!`);
+        alert(`Success: Welcome, ${user.displayName}!`);
         navigate("/feed");
     } catch (error) {
         console.error("Google sign in error:", error.code, error.message);
-        alert("Google Sign In Error", error.message);
+        alert(`Google Sign In Error ${error.message}`);
     }
   }
 
   const handleEmailSignIn = async () => {
 
     if (!email || !password) {
-      alert("Error", "Please enter both email and password.");
+      alert("Error: Please enter both email and password.");
       return;
     }
 
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       console.log("Sign in successful:", userCredential.user);
-      alert("Success!", "You are now signed in.");
+      alert("Success: You are now signed in.");
       navigate("/feed");
     } catch(error) {
       console.error("Sign in error:", error.code, error.message);
       if (error.code === "auth/invalid-credential" || error.code === "auth/wrong-password" || error.code === "auth/user-not-found") {
-          alert("Sign In Failed", "Invalid email or password. Please try again.");
+          alert("Sign In Failed: Invalid email or password. Please try again.");
       } else {
-          alert("Sign In Error", error.message);
+          alert(`Sign In Error: ${error.message}`);
       }
     }
   }
@@ -84,14 +76,14 @@ export default function MacroTokLogin() {
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         console.log("Sign up successful:", userCredential.user);
-        alert("Account Created!", "Your account has been successfully created. You are now signed in.");
+        alert("Account Created!: Your account has been successfully created. You are now signed in.");
         navigate("/feed")
     } catch (error) {
         console.error("Sign up error:", error.code, error.message);
         if (error.code === "auth/email-already-in-use") {
             alert("Sign Up Failed: This email address is already in use.");
         } else {
-            alert("Sign Up Error", error.message);
+            alert(`Sign Up Error: ${error.message}`);
         }
     }
 
