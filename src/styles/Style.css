@@ -1,0 +1,562 @@
+/* Layout shell for the Settings page */
+.macrotok-app {
+  /* Light page background like Figma */
+  background: #f3f4fb;
+  min-height: 100vh;
+}
+
+/* When you turn dark mode on in React */
+.dark .macrotok-app {
+  background: #0f172b;
+}
+
+/* Top dark header bar */
+.macrotok-header {
+  background-color: #020617;       /* very dark navy */
+  border-bottom: 1px solid #111827;
+  padding: 24px 32px;
+}
+
+/* Inner header content (logo + Sign Out) */
+.macrotok-header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* MacroTok text logo (matches Figma) */
+.macrotok-logo-text {
+  color: #ffffff;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+/* Main settings layout (title + card area) */
+.macrotok-layout {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 48px 32px 64px;
+}
+
+
+:root {
+  /* Primary MacroTok Colors */
+  --macrotok-dark-bg: #0f172b;
+  --macrotok-purple: #4f39f6;
+  --macrotok-purple-hover: #6750ff;
+  --macrotok-purple-light: rgba(79, 57, 246, 0.1);
+  
+  /* Dark Theme Background Variations */
+  --macrotok-dark-secondary: #1e293b;
+  --macrotok-dark-tertiary: #334155;
+  
+  /* Card & Surface Colors */
+  --macrotok-card-bg: #ffffff;
+  --macrotok-card-shadow: rgba(0, 0, 0, 0.1);
+  
+  /* Text Colors */
+  --macrotok-text-primary: #0f172b;
+  --macrotok-text-secondary: #64748b;
+  --macrotok-text-muted: #94a3b8;
+  
+  /* Border & Divider Colors */
+  --macrotok-border: #e2e8f0;
+  --macrotok-border-light: #f1f5f9;
+  
+  /* Status Colors */
+  --macrotok-success: #10b981;
+  --macrotok-warning: #f59e0b;
+  --macrotok-error: #ef4444;
+  --macrotok-info: #3b82f6;
+}
+
+.dark {
+  /* Dark Mode Overrides for MacroTok */
+  --macrotok-card-bg: #1e293b;
+  --macrotok-card-shadow: rgba(0, 0, 0, 0.3);
+  --macrotok-text-primary: #f1f5f9;
+  --macrotok-text-secondary: #cbd5e1;
+  --macrotok-text-muted: #94a3b8;
+  --macrotok-border: #334155;
+  --macrotok-border-light: #475569;
+}
+
+/* MacroTok App Layout */
+.macrotok-app {
+  background: var(--macrotok-dark-bg);
+  min-height: 100vh;
+}
+
+.dark .macrotok-app {
+  background: var(--macrotok-dark-bg);
+}
+
+/* Settings Page Container */
+.macrotok-settings-container {
+  background: var(--macrotok-dark-bg);
+  min-height: 100vh;
+  padding: 2rem 1rem;
+}
+
+.macrotok-settings-wrapper {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* MacroTok Cards */
+.macrotok-card {
+  background: var(--macrotok-card-bg);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px var(--macrotok-card-shadow);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  transition: box-shadow 0.2s ease;
+}
+
+.macrotok-card:hover {
+  box-shadow: 0 4px 6px var(--macrotok-card-shadow);
+}
+
+/* Section Headers */
+.macrotok-section-header {
+  color: var(--macrotok-text-primary);
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--macrotok-border);
+}
+
+.macrotok-section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--macrotok-text-primary);
+}
+
+.macrotok-section-description {
+  font-size: 0.875rem;
+  color: var(--macrotok-text-secondary);
+  margin-top: 0.25rem;
+}
+
+/* Purple Accent Elements */
+.macrotok-purple-accent {
+  color: var(--macrotok-purple);
+}
+
+.macrotok-purple-bg {
+  background-color: var(--macrotok-purple);
+  color: white;
+}
+
+.macrotok-purple-bg:hover {
+  background-color: var(--macrotok-purple-hover);
+}
+
+.macrotok-purple-border {
+  border-color: var(--macrotok-purple);
+}
+
+.macrotok-purple-focus:focus {
+  outline-color: var(--macrotok-purple);
+  outline-width: 2px;
+  outline-offset: 2px;
+}
+
+/* Buttons */
+.macrotok-btn-primary {
+  background-color: var(--macrotok-purple);
+  color: white;
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.macrotok-btn-primary:hover {
+  background-color: var(--macrotok-purple-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(79, 57, 246, 0.3);
+}
+
+.macrotok-btn-primary:active {
+  transform: translateY(0);
+}
+
+.macrotok-btn-secondary {
+  background-color: transparent;
+  color: var(--macrotok-text-primary);
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 500;
+  border: 1px solid var(--macrotok-border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.macrotok-btn-secondary:hover {
+  background-color: var(--macrotok-purple-light);
+  border-color: var(--macrotok-purple);
+  color: var(--macrotok-purple);
+}
+
+.macrotok-btn-danger {
+  background-color: var(--macrotok-error);
+  color: white;
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.macrotok-btn-danger:hover {
+  background-color: #dc2626;
+  transform: translateY(-1px);
+}
+
+/* Form Elements */
+.macrotok-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--macrotok-border);
+  border-radius: 8px;
+  background-color: var(--macrotok-card-bg);
+  color: var(--macrotok-text-primary);
+  transition: all 0.2s ease;
+}
+
+.macrotok-input:focus {
+  outline: none;
+  border-color: var(--macrotok-purple);
+  box-shadow: 0 0 0 3px var(--macrotok-purple-light);
+}
+
+.macrotok-input::placeholder {
+  color: var(--macrotok-text-muted);
+}
+
+.macrotok-label {
+  display: block;
+  font-weight: 500;
+  color: var(--macrotok-text-primary);
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.macrotok-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--macrotok-border);
+  border-radius: 8px;
+  background-color: var(--macrotok-card-bg);
+  color: var(--macrotok-text-primary);
+  resize: vertical;
+  min-height: 100px;
+  transition: all 0.2s ease;
+}
+
+.macrotok-textarea:focus {
+  outline: none;
+  border-color: var(--macrotok-purple);
+  box-shadow: 0 0 0 3px var(--macrotok-purple-light);
+}
+
+/* Toggle Switch */
+.macrotok-toggle-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 0;
+}
+
+.macrotok-toggle-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.macrotok-toggle-title {
+  font-weight: 500;
+  color: var(--macrotok-text-primary);
+}
+
+.macrotok-toggle-description {
+  font-size: 0.875rem;
+  color: var(--macrotok-text-secondary);
+}
+
+/* Avatar Upload */
+.macrotok-avatar-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.macrotok-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--macrotok-purple);
+}
+
+.macrotok-avatar-placeholder {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: var(--macrotok-purple-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--macrotok-purple);
+  font-size: 2rem;
+  font-weight: 600;
+  border: 3px solid var(--macrotok-purple);
+}
+
+/* Settings Header */
+.macrotok-settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--macrotok-border-light);
+}
+
+.macrotok-settings-title {
+  color: white;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+/* Logo */
+.macrotok-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.macrotok-logo-icon {
+  width: 40px;
+  height: 40px;
+  background-color: var(--macrotok-purple);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+/* Divider */
+.macrotok-divider {
+  height: 1px;
+  background-color: var(--macrotok-border);
+  margin: 1.5rem 0;
+}
+
+/* Alert Messages */
+.macrotok-alert {
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: start;
+  gap: 0.75rem;
+}
+
+.macrotok-alert-success {
+  background-color: rgba(16, 185, 129, 0.1);
+  border: 1px solid var(--macrotok-success);
+  color: var(--macrotok-success);
+}
+
+.macrotok-alert-error {
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid var(--macrotok-error);
+  color: var(--macrotok-error);
+}
+
+.macrotok-alert-warning {
+  background-color: rgba(245, 158, 11, 0.1);
+  border: 1px solid var(--macrotok-warning);
+  color: var(--macrotok-warning);
+}
+
+.macrotok-alert-info {
+  background-color: rgba(59, 130, 246, 0.1);
+  border: 1px solid var(--macrotok-info);
+  color: var(--macrotok-info);
+}
+
+/* Modal/Dialog */
+.macrotok-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 1rem;
+}
+
+.macrotok-modal {
+  background-color: var(--macrotok-card-bg);
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+.macrotok-modal-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--macrotok-text-primary);
+  margin-bottom: 1rem;
+}
+
+.macrotok-modal-description {
+  color: var(--macrotok-text-secondary);
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.macrotok-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+/* Badge */
+.macrotok-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.macrotok-badge-purple {
+  background-color: var(--macrotok-purple-light);
+  color: var(--macrotok-purple);
+}
+
+.macrotok-badge-success {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--macrotok-success);
+}
+
+/* Skeleton Loader */
+.macrotok-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--macrotok-border) 25%,
+    var(--macrotok-border-light) 50%,
+    var(--macrotok-border) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .macrotok-settings-container {
+    padding: 1rem 0.5rem;
+  }
+  
+  .macrotok-card {
+    padding: 1rem;
+  }
+  
+  .macrotok-settings-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .macrotok-modal {
+    padding: 1.5rem;
+  }
+  
+  .macrotok-modal-actions {
+    flex-direction: column-reverse;
+  }
+  
+  .macrotok-modal-actions button {
+    width: 100%;
+  }
+}
+
+/* Utility Classes */
+.macrotok-text-center {
+  text-align: center;
+}
+
+.macrotok-mt-4 {
+  margin-top: 1rem;
+}
+
+.macrotok-mb-4 {
+  margin-bottom: 1rem;
+}
+
+.macrotok-p-4 {
+  padding: 1rem;
+}
+
+.macrotok-flex {
+  display: flex;
+}
+
+.macrotok-flex-col {
+  flex-direction: column;
+}
+
+.macrotok-gap-4 {
+  gap: 1rem;
+}
+
+.macrotok-items-center {
+  align-items: center;
+}
+
+.macrotok-justify-between {
+  justify-content: space-between;
+}
+
+.macrotok-w-full {
+  width: 100%;
+}
+
+/* Transitions */
+.macrotok-transition {
+  transition: all 0.2s ease;
+}
+
+/* Focus Visible */
+.macrotok-focus-visible:focus-visible {
+  outline: 2px solid var(--macrotok-purple);
+  outline-offset: 2px;
+}
