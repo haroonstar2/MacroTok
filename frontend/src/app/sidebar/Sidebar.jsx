@@ -132,7 +132,7 @@ export default function Sidebar({ active = "home", onNav }) {
       </nav>
 
       {/* Profile summary at bottom of sidebar */}
-      <div className="sb-profile">
+      <div className="sb-profile" onClick={() => navigate("/settings")}>
         <div className="sb-avatar">U</div>
         <div>
           <div className="sb-profile-title">Your Profile</div>

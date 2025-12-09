@@ -37,7 +37,7 @@ import Landing from "./app/landing/Landing";
 import Feed from "./app/feed/Feed";
 import Sidebar from "./app/sidebar/Sidebar";
 import RecipeView from "./app/recipes/RecipeView";
-import Recipes from "./app/recipes/recipes"; // temp to component to check spoonacular connection
+import SettingsPage from "./app/profile/SettingsPage";
 import useRecipesStore from "./store/recipeStore";
 import "./app/sidebar/sidebar.css";
 import "./App.css";
@@ -62,6 +62,8 @@ function AppLayout() {
       case "plan":
         navigate("/calendar");
         break;
+      case "settings":
+        navigate("/settings")
       default:
         break;
     }
@@ -167,20 +169,12 @@ export default function App() {
   return (
     <div className={isDark ? "app app--dark" : "app app--light"}>
       <Router>
-        {/* Global theme toggle – floating, doesn't push content down */}
-        <div className="theme-toggle">
-          <button onClick={toggleTheme} className="theme-toggle__btn modern-toggle">
-          {isDark ? "☀️" : "🌙"}
-</button>
-
-        </div>
-
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<MacroTokLogin />}/>
+          <Route path="/settings" element={<SettingsPage/>} />
 
           <Route element={<AppLayout/>}>
-            <Route path="/test" element={<Recipes/>} />
             <Route path="/feed" element={<Feed />} />
             <Route path="/calendar" element={<PlannerPage />} />
             <Route path="/recipe/:id" element={<RecipePage />} />
