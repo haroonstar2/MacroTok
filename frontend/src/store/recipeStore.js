@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import recipeAPI from "../api/recipeAPI";
-import { db } from "../../../backend/firebaseConfig";
+//import { db } from "../../../backend/firebaseConfig";
+import { db } from "../firebaseConfig";
+
 import { collection, addDoc, getDocs, serverTimestamp } from "firebase/firestore";
 
 const useRecipesStore = create((set, get) => ({

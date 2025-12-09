@@ -23,7 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 
-FireBaseConfig.js
+#FireBaseConfig.js
 **/.env
 **/.env.local
 .env
