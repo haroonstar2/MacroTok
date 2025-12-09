@@ -15,10 +15,12 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./Landing.css";
 import { auth } from "../../../../backend/firebaseConfig";
 import { onAuthStateChanged, signOut } from "firebase/auth"
+import { useNavigate } from "react-router-dom";
 
-function AuthButton() {
+function AuthButton({ theme }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -31,12 +33,12 @@ function AuthButton() {
   if (loading) return null;
 
   return !user ? (
-    <a className="btn btn--outline" href="/login">
+    <button className={`btn btn--outline ${theme === "dark" ? "light" : "dark"}`} onClick={() => navigate("/login")}>
       Log in
-    </a>
+    </button>
   ) : (
     <button
-      className="btn btn--outline"
+      className={`btn btn--outline ${theme === "dark" ? "light" : "dark"}`}
       onClick={() => signOut(auth)}
     >
       Log out
@@ -154,7 +156,7 @@ export default function Landing() {
           </button>
 
           {/* Auth buttons */}
-          <AuthButton />
+          <AuthButton theme={theme} />
         </nav>
       </header>
 
