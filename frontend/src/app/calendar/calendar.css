@@ -120,6 +120,7 @@ body {
 .cal-btn:hover {
   background: #f8fafc;
 }
+/* ****UNUSED CSS**
 .cal-danger {
   color: #b91c1c;
   border-color: #fecaca;
@@ -190,7 +191,7 @@ body {
   padding: 6px 8px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-}
+} */
 .goal-bar {
   height: 10px;
   background: #f3f4f6;
@@ -204,3 +205,191 @@ border-radius: 999px;
     transition: width 0.4s ease, background 0.4s ease;
   }
   
+  /* Dots for recipe indicators */
+.dots {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+  justify-content: center;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  background: #16a34a; /* green */
+  border-radius: 50%;
+}
+
+
+/*DOTS FOR CALENDAR RECIPE*/
+.cal-day {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  padding-top: 6px; /* optional, makes spacing cleaner */
+}
+
+.day-number {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.dots {
+  display: flex;
+  gap: 3px;
+  flex-wrap: nowrap;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #16a34a; /* green */
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.modal input {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+/* Search Results Dropdown */
+.search-results {
+  margin-top: 6px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  overflow: hidden;
+  max-height: 220px;
+  overflow-y: auto;
+  animation: fadeIn 0.12s ease-in-out;
+}
+
+/* Individual search item */
+.search-item {
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #111827;
+  cursor: pointer;
+  border-bottom: 1px solid #f3f4f6;
+  transition: background 0.15s ease;
+}
+
+.search-item:last-child {
+  border-bottom: none;
+}
+
+.search-item:hover {
+  background: #f8fafc;
+}
+
+
+.macro-box {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #374151;
+  display: grid;
+  gap: 6px;
+}
+
+/* === RECIPE LIST INSIDE DAILY SUMMARY === */
+.day-summary-box {
+  margin-top: 16px;
+  padding: 12px;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.summary-recipe {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.summary-recipe strong {
+  font-size: 15px;
+  color: #111827;
+}
+
+.summary-macros {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 13px;
+  color: #374151;
+}
+
+.summary-macros span {
+  background: #ffffff;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+
+/* Button row container */
+.goal-selector {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0 12px;
+}
+
+/* Base button style */
+.goal-selector button {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid #16a34a;
+  background: #e9f9ee;        /* light green background */
+  color: #166534;             /* deep green text */
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+/* Hover state */
+.goal-selector button:hover {
+  background: #16a34a;
+  color: white;
+}
+
+/* Active state */
+.goal-selector button.active {
+  background: #16a34a;
+  color: white;
+  border-color: #16a34a;
+}
+
+
