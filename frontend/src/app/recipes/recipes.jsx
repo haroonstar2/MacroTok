@@ -1,6 +1,6 @@
 import React from "react";
 import { useEffect } from "react";
-import useRecipesStore from "../../store/recipes";
+import useRecipesStore from "../../store/recipeStore";
 
 export default function Recipes() {
   const { recipe, getRandomRecipe } = useRecipesStore();
