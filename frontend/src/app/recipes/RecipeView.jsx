@@ -1,7 +1,13 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
-export default function Recipe({ recipe, onBack }) {
+function getNutrient(recipe, name) {
+  return recipe.nutrition?.nutrients?.find((n) => n.name === name)?.amount ?? 0;
+}
+
+export default function RecipeView({ recipe, onBack }) {
+
+  console.log(recipe);  
 
   const navigate = useNavigate();
 
@@ -28,18 +34,18 @@ export default function Recipe({ recipe, onBack }) {
         <div>
           <h1 style={{ margin: "8px 0" }}>{recipe.title}</h1>
           <p style={{ color: "#6b7280" }}>
-            🔥 {recipe.calories} kcal • ⏱ {recipe.time} min • {recipe.level}
+            🔥 {getNutrient(recipe, "Calories")} cal • ⏱ {recipe.readyInMinutes} min • {recipe.level}
           </p>
           <div style={{ marginTop: 12 }}>
             <strong>Ingredients</strong>
             <ul style={{ marginTop: 8 }}>
-              {recipe.ingredients.map((ing) => <li key={ing}>{ing}</li>)}
+              {recipe.extendedIngredients.map((ing) => <li key={ing.id}>{ing.original}</li>)}
             </ul>
           </div>
         </div>
 
         <img
-          src={recipe.img}
+          src={recipe.image}
           alt={recipe.title}
           style={{ width: "100%", borderRadius: 16, objectFit: "cover" }}
         />
@@ -48,7 +54,7 @@ export default function Recipe({ recipe, onBack }) {
       <section style={{ marginTop: 24 }}>
         <h2>Directions</h2>
         <ol style={{ marginTop: 8 }}>
-          {recipe.steps.map((s, i) => <li key={i} style={{ margin: "8px 0" }}>{s}</li>)}
+          {recipe.analyzedInstructions[0].steps.map((s, i) => <li key={i} style={{ margin: "8px 0" }}>{s.step}</li>)}
         </ol>
       </section>
     </main>

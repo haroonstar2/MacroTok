@@ -36,8 +36,9 @@ import Goal from "./app/calendar/Goal";
 import Landing from "./app/landing/Landing";
 import Feed from "./app/feed/Feed";
 import Sidebar from "./app/sidebar/Sidebar";
-import Recipe from "./app/recipes/Recipe";
-import { RECIPES } from "./store/temp_recipes";
+import RecipeView from "./app/recipes/RecipeView";
+import SettingsPage from "./app/profile/SettingsPage";
+import useRecipesStore from "./store/recipeStore";
 import "./app/sidebar/sidebar.css";
 import "./App.css";
 
@@ -61,6 +62,8 @@ function AppLayout() {
       case "plan":
         navigate("/calendar");
         break;
+      case "settings":
+        navigate("/settings")
       default:
         break;
     }
@@ -142,10 +145,12 @@ function PlannerPage() {
 
 function RecipePage() {
   const { id } = useParams();
-  const recipe = RECIPES.find((r) => String(r.id) === String(id));
+
+  const recipes = useRecipesStore((state) => state.recipes); // Get all recipes currently loaded
+  const recipe = recipes.find((r) => String(r.id) === String(id));
   const navigate = useNavigate();
 
-  return <Recipe recipe={recipe} onBack={() => navigate(-1)} />;
+  return <RecipeView recipe={recipe} onBack={() => navigate(-1)} />;
 }
 
 // --------------- App (Global Theme) ----------
@@ -164,16 +169,10 @@ export default function App() {
   return (
     <div className={isDark ? "app app--dark" : "app app--light"}>
       <Router>
-        {/* Global theme toggle – floating, doesn't push content down */}
-        <div className="theme-toggle">
-          <button onClick={toggleTheme} className="theme-toggle__btn">
-            {isDark ? "☀️ Light Mode" : "🌙 Dark Mode"}
-          </button>
-        </div>
-
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<MacroTokLogin />}/>
+          <Route path="/settings" element={<SettingsPage/>} />
 
           <Route element={<AppLayout/>}>
             <Route path="/feed" element={<Feed />} />
