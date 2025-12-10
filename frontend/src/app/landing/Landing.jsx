@@ -13,8 +13,8 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./Landing.css";
-// previous import { auth } from "../../../../backend/firebaseConfig";
-import { auth } from "../../firebaseConfig"; //new 
+import { auth } from "../../../../backend/firebaseConfig"; // previous 
+// import { auth } from "../../firebaseConfig"; //new 
 import { onAuthStateChanged, signOut } from "firebase/auth"
 import { useNavigate } from "react-router-dom";
 

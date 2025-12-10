@@ -2,10 +2,8 @@ import React, { useState } from "react";
 import "./login.css";
 import "./style.css"
 import { useNavigate } from "react-router";
-import { auth, db } from "../../firebaseConfig";
-
-
- //import { auth } from "../../../../backend/firebaseConfig"; load from backend
+// import { auth, db } from "../../firebaseConfig";
+ import { auth } from "../../../../backend/firebaseConfig"; //load from backend
 
 import { 
     createUserWithEmailAndPassword,
