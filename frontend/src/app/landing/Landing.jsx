@@ -13,6 +13,39 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./Landing.css";
+import { auth } from "../../../../backend/firebaseConfig"; // previous 
+// import { auth } from "../../firebaseConfig"; //new 
+import { onAuthStateChanged, signOut } from "firebase/auth"
+import { useNavigate } from "react-router-dom";
+
+function AuthButton({ theme }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, []);
+
+  if (loading) return null;
+
+  return !user ? (
+    <button className={`btn btn--outline ${theme === "dark" ? "light" : "dark"}`} onClick={() => navigate("/login")}>
+      Log in
+    </button>
+  ) : (
+    <button
+      className={`btn btn--outline ${theme === "dark" ? "light" : "dark"}`}
+      onClick={() => signOut(auth)}
+    >
+      Log out
+    </button>
+  );
+}
 
 export default function Landing() {
   /* ==========================================================
@@ -124,7 +157,7 @@ export default function Landing() {
           </button>
 
           {/* Auth buttons */}
-          <a className="btn btn--outline" href="/login">Log in</a>
+          <AuthButton theme={theme} />
         </nav>
       </header>
 
@@ -286,3 +319,5 @@ export default function Landing() {
     </main>
   );
 }
+
+
