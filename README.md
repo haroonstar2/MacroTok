@@ -1,6 +1,5 @@
-<<<<<<< Updated upstream
-# MacroTok
-=======
+
+
 # MacroTok — Frontend (Calendar + Goal)
 Overview
 
@@ -133,6 +132,17 @@ frontend/
 ├── global.css
 ```
 ## Scrum Updates
+
+**November 13 - November 30, 2025**
+
+This cycle was focused on finishing up the databases and authentication for the recipes and login functionality respectively. Roles this cycle were the same. Mahmoud finished up the login and settings pages. Fiyori focused on clearing up the dark/light mode functionality. Adrian finished the tiles class. Andres added Firebase functionality and expanded the calendar to add recipes. Haroon merged commits from the development branch and wrote more tests. He also combined everyone’s work into the final product.
+
+The goals for the next cycle are:
+Make the recipes variable (change every reload)
+Add functionality to the Settings page
+Finalize the code for presentation
+Explore how to scale the project for more users
+
 
 **October 30 - November 13. 2025**
 
