@@ -28,3 +28,6 @@ dist-ssr
 **/.env.local
 .env
 firebaseConfig.js
+firebase*
+fireBase*
+frontend/src/firebase.js
