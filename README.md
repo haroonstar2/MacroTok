@@ -1,6 +1,3 @@
-<<<<<<< Updated upstream
-# MacroTok
-=======
 # MacroTok — Frontend (Calendar + Goal)
 Overview
 
