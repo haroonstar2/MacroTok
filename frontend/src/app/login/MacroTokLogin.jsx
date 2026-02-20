@@ -1,21 +1,19 @@
 import React, { useState } from "react";
 import "./login.css";
 import "./style.css"
-import { useNavigate } from "react-router";
-import { auth, db } from "../../startFirebase";
-//  import { auth } from "../../../../backend/startFirebase"; //load from backend
+import { useNavigate } from "react-router-dom";
+import { db, auth, provider } from "../../startFirebase";
 
 import { 
-    createUserWithEmailAndPassword,
-    signInWithEmailAndPassword,
-    signInWithPopup,
-    GoogleAuthProvider,
-    sendPasswordResetEmail,
-    signOut
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  sendPasswordResetEmail,
+  getAdditionalUserInfo,
+  signOut
 } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 
-// INITIALIZE FIREBASE ---
-const provider = new GoogleAuthProvider();
 
 export default function MacroTokLogin() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -32,7 +30,32 @@ export default function MacroTokLogin() {
     try {
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
-        console.log("Google sign in successful:", user);
+
+        const details = await getAdditionalUserInfo(result);
+        const isNewUser = details?.isNewUser;
+
+        if (isNewUser) {
+            // Create a document in the users collection with the user uid as the ID.
+          await setDoc(doc(db, "users", user.uid), {
+            email: user.email,
+            displayName: user.displayName,
+            createdAt: new Date(),
+            lastLogin: new Date(),
+            // Default values for new users
+            settings: {
+              bio: "",
+              communityUpdates: true,
+              darkMode: false,
+              desiredWeight: 165,
+              emailNotifications: true,
+              fitnessGoal: "Lose Weight",
+              isPublic: true,
+              measurements: "imperial",
+              pushNotifications: true
+            }
+          });
+        }
+
         alert(`Success: Welcome, ${user.displayName}!`);
         navigate("/feed");
     } catch (error) {
@@ -64,12 +87,17 @@ export default function MacroTokLogin() {
   }
 
   const handleSignUp = async () => {
+    console.log(password);
+    console.log(confirmPassword);
 
     if (!email || !password) {
       alert("Sign Up Error: Please enter an email and password in the fields first.");
       return;
     }
-
+    if (password != confirmPassword) {
+      alert("Error: Passwords do not match. Please try again.");
+      return;
+    }
     if (password.length < 6) {
       alert("Sign Up Error: Password must be at least 6 characters long.");
       return;
@@ -77,6 +105,30 @@ export default function MacroTokLogin() {
 
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+        const user = userCredential.user;
+
+        // Create a document in the users collection with the user uid as the ID.
+        await setDoc(doc(db, "users", user.uid), {
+          email: user.email,
+          displayName: name,
+          createdAt: new Date(),
+          lastLogin: new Date(),
+          // Default values for new users
+          settings: {
+            bio: "",
+            communityUpdates: true,
+            darkMode: false,
+            desiredWeight: 165,
+            emailNotifications: true,
+            fitnessGoal: "Lose Weight",
+            isPublic: true,
+            measurements: "imperial",
+            pushNotifications: true
+          }
+        });
+
+        console.log("User document created");      
         console.log("Sign up successful:", userCredential.user);
         alert("Account Created!: Your account has been successfully created. You are now signed in.");
         navigate("/feed")
@@ -206,7 +258,7 @@ export default function MacroTokLogin() {
                 <input
                   type={showPassword ? "text" : "password"}
                   className="input-2"
-                  placeholder="••••••••"
+                  placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -231,7 +283,7 @@ export default function MacroTokLogin() {
                   <input
                     type={showConfirmPassword ? "text" : "password"}
                     className="input-2"
-                    placeholder="••••••••"
+                    placeholder="Confirm Password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
@@ -267,7 +319,7 @@ export default function MacroTokLogin() {
             </p>
             <button className="button-4" onClick={() => setIsSignUp(!isSignUp)}>
               <div className="text-wrapper-8">
-                {isSignUp ? "Sign in" : "Sign up"}
+                {isSignUp ? "Sign In" : "Sign Up"}
               </div>
             </button>
           </div>

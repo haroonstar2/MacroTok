@@ -1,4 +1,3 @@
-// ------------------------------------------------------------
 // Static recipe dataset used by Feed.jsx and RecipeDetail.jsx.
 // Each recipe object contains:
 //   - id:          unique string used in routing (/recipe/:id)
@@ -12,7 +11,6 @@
 //   - level:       difficulty label ("Easy", "Medium", "Hard")
 //   - ingredients: string list of ingredients
 //   - steps:       ordered instructions for cooking/preparation
-// ------------------------------------------------------------
 
 export const RECIPES = [
   {

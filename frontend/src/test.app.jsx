@@ -1,0 +1,1 @@
+// test if pressing your profile button redirects to profile page

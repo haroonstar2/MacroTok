@@ -1,19 +1,5 @@
-/**
- * Landing.jsx
- * ---------------------------------------------
- * MacroTok — Landing Page Component
- *
- * Features implemented:
- *  1. Hero section with a 5-image auto-slideshow (rotates every 5 seconds)
- *  2. Light/Dark theme toggle with persistent user preference
- *  3. Responsive layout with intro text, feature highlights, and footer
- *  4. Clean, accessible UI (keyboard + hover support)
- * ---------------------------------------------
- */
-
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./Landing.css";
-// import { auth } from "../../../../backend/startFirebase.js"; // previous 
 import { auth } from "../../startFirebase";
 import { onAuthStateChanged, signOut } from "firebase/auth"
 import { useNavigate } from "react-router-dom";
@@ -48,13 +34,6 @@ function AuthButton({ theme }) {
 }
 
 export default function Landing() {
-  /* ==========================================================
-     THEME HANDLING (Light / Dark Mode)
-     ==========================================================
-     - Reads user preference from localStorage or system settings.
-     - Toggles `.dark` class on <body> to switch theme colors.
-     - Persists theme choice for future sessions.
-  ========================================================== */
 
   const prefersDark =
     typeof window !== "undefined" &&
@@ -78,15 +57,6 @@ export default function Landing() {
   const toggleTheme = () =>
     setTheme((t) => (t === "dark" ? "light" : "dark"));
 
-  /* ==========================================================
-     HERO SLIDESHOW (Auto-rotating background images)
-     ==========================================================
-     - Rotates between 5 provided images every 5 seconds.
-     - User can navigate manually (prev / next / dots).
-     - Pauses when hovered or focused for better accessibility.
-  ========================================================== */
-
-  // 5 image URLs provided by user
   const IMAGES = useMemo(
     () => [
       
@@ -119,25 +89,10 @@ export default function Landing() {
   const goPrev = () => setIdx((i) => (i - 1 + IMAGES.length) % IMAGES.length);
   const goNext = () => setIdx((i) => (i + 1) % IMAGES.length);
 
-  /* ==========================================================
-     PAGE STRUCTURE
-     ==========================================================
-     1. Header (brand + navigation + theme toggle)
-     2. Hero section (intro text + slideshow)
-     3. Features section (list of features)
-     4. How It Works section (3-step list)
-     5. Footer
-  ========================================================== */
 
   return (
     <main className="landing">
-      {/* =====================================================
-          HEADER SECTION
-          -----------------------------------------------------
-          - Displays MacroTok logo/brand
-          - Navigation links
-          - Theme toggle + login/signup buttons
-      ===================================================== */}
+
       <header className="landing__header">
         <div className="brand" aria-label="MacroTok home">
           <span className="brand__dot" />
@@ -161,12 +116,6 @@ export default function Landing() {
         </nav>
       </header>
 
-      {/* =====================================================
-          HERO SECTION (Slideshow + Text)
-          -----------------------------------------------------
-          - Shows rotating food images with fade animation
-          - Displays main slogan, CTA buttons, and key points
-      ===================================================== */}
       <section className="hero">
         {/* Text / Marketing Copy */}
         <div className="hero__copy">
@@ -242,11 +191,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* =====================================================
-          FEATURES SECTION
-          -----------------------------------------------------
-          - Highlights 4 main capabilities of MacroTok
-      ===================================================== */}
       <section className="features">
         <h2 className="section__title">What you can do</h2>
 
@@ -286,11 +230,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* =====================================================
-          HOW IT WORKS SECTION
-          -----------------------------------------------------
-          - Simple 3-step explanation for new users
-      ===================================================== */}
       <section className="how">
         <h2 className="section__title">How it works</h2>
         <ol className="steps">
@@ -300,12 +239,6 @@ export default function Landing() {
         </ol>
       </section>
 
-      {/* =====================================================
-          FOOTER SECTION
-          -----------------------------------------------------
-          - Displays copyright
-          - Links to FAQ, Privacy, Terms
-      ===================================================== */}
       <footer className="footer">
         <div className="footer__row">
           <div>© {new Date().getFullYear()} MacroTok</div>

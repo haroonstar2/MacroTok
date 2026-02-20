@@ -1,5 +1,5 @@
 import { api } from "./client";
-import { USE_MOCKS } from "../config";
+import { USE_MOCKS } from "./config";
 import * as mock from "../app/calendar/mocks/calendar.mock.js";
 
 /**

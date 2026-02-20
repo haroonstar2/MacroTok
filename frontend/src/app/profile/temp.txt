@@ -1,0 +1,32 @@
+    // const fetchUserData = async () => {
+    //   console.log("Component rendered! Getting something from Firebase..");
+    //   if (auth.currentUser) {
+        
+    //     // Make a reference to the user's document inside the users collection
+    //     const docRef = doc(db, "users", auth.currentUser.uid);
+    //     const docSnap = await getDoc(docRef);
+
+    //     if (docSnap.exists()) {
+    //       const data = docSnap.data();
+    //       setUserData(data.settings);
+    //       console.log(userData);
+
+    //       // setUsername(data.settings.username);
+    //       // setEmail(data.settings.email)
+    //       // setBio(data.settings.bio);
+    //       // // setCommunityUpdates(data.communityUpdates); // Need one for communityUpdates
+    //       // setDesiredWeight(data.settings.desiredWeight);
+    //       // setFitnessGoal(data.settings.fitnessGoal);
+    //       // // setPublic(data.public); // Needs to be implemented
+    //       // // setMeasurements(data.measurements); // Needs to be implemented
+    //       // // setPushNotifications(data.pushNotifications); // Needs to be implemented
+    //       // // setEmailNotifications(data.emailNotifications); // Needs to be implemented
+    //     } else {
+    //       console.log("No such document!");
+    //     }
+    //   }
+    //   else {
+    //     console.log("No such user!");
+    //   }
+    // }
+    // fetchUserData();

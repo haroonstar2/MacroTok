@@ -1,25 +1,84 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { auth, db } from '../../startFirebase';
+import userEvent from '@testing-library/user-event';
+
+import { 
+    onAuthStateChanged,
+    sendPasswordResetEmail,
+    signOut,
+    deleteUser,
+    reauthenticateWithCredential,
+    reauthenticateWithPopup,
+    EmailAuthProvider,
+    GoogleAuthProvider
+} from 'firebase/auth';
+
+import { 
+    doc, 
+    getDoc, 
+    updateDoc,
+    deleteDoc
+} from "firebase/firestore";
+
+import useSettings from './useSettings';
 
 export default function SettingsPage() {
+
+  // Reusable firebase document reference
+  const [userDocRef, setUserDocRef] = useState(null);
+
   const [activeTab, setActiveTab] = useState('profile');
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [username, setUsername] = useState('@johndoe');
-  const [bio, setBio] = useState('');
-  const [fitnessGoal, setFitnessGoal] = useState('lose_weight');
-  const [desiredWeight, setDesiredWeight] = useState('');
-  const [email, setEmail] = useState('john.doe@example.com');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showDeactivateDialog, setShowDeactivateDialog] = useState(false);
 
+  // For storing the user's profile settings
+  const [userData, setUserData] = useState(null);
+  // For waiting for the user data to load from Firebase
+  const [isLoading, setIsLoading] = useState(true);
+
   const navigate = useNavigate();
 
-  const handleSaveProfile = () => {
-    alert('Profile updated successfully!');
+  const handleSaveProfile = async () => {
+    if (auth.currentUser) {
+      try {
+        console.log("yo");
+      
+        await updateDoc(userDocRef, {
+          settings: state 
+        });
+        alert('Profile updated successfully!');
+      } catch (error) {
+        console.error("Error updating profile:", error);
+        alert('Failed to update profile.');
+      }
+    }
   };
 
-  const handleSendResetLink = () => {
-    alert('Password reset link sent! Check your email. The link will expire in 20 minutes.');
+  const handleSendResetLink = async () => {
+
+    const user = auth.currentUser;
+
+    if (!user || !user.email) {
+      alert("Error: User session not found. Please log in again.")
+      return;
+    }
+
+    try {
+        await sendPasswordResetEmail(auth, user.email);
+        alert(`Check Your Email: A password reset link has been sent to ${user.email}.`);
+      } catch (error) {
+        console.error("Password reset error:", error);
+        
+        // Friendly error handling
+        if (error.code === 'auth/too-many-requests') {
+          alert("Slow down! You've requested too many emails. Please wait a few minutes.");
+        } else {
+          alert(`Error: ${error.message}`);
+        }
+      }
+
   };
 
   const handleDeactivate = () => {
@@ -27,26 +86,181 @@ export default function SettingsPage() {
     setShowDeactivateDialog(false);
   };
 
-  const handleDelete = () => {
-    alert('Account permanently deleted. We\'re sad to see you go.');
-    setShowDeleteDialog(false);
+  const handleDelete = async () => {
+
+    const user = auth.currentUser;
+
+    // Return early is the user is not logged in
+    if(!user) {
+      console.log("There's no user signed in. Stopping deletion...");
+      return;
+    }
+
+    console.log("Reauthenticating user...");
+    try {
+      console.log("yo");
+      
+      // Check how the user is logged in
+      const providerId = user.providerData[0].providerId;
+      console.log("yo2");
+      // If the user is a google user
+      if(providerId === "google.com") {
+        const provider = new GoogleAuthProvider;
+        await reauthenticateWithPopup(user, provider);
+      }
+      else {
+        // If the user is an email user
+        const password = prompt("Please enter your current password to confirm account deletion:");
+        // If no password then stop deletion
+        if(!password) return;
+
+        const credential = EmailAuthProvider.credential(user.email, password);
+        await reauthenticateWithCredential(user, credential);
+      }
+
+      // Delete user data from Firestore
+      console.log("Deleting user data...");
+      await deleteDoc(userDocRef);
+
+      // Delete the user account
+      console.log("Deleting user account...");
+      await deleteUser(user);
+
+      alert('Account permanently deleted. We\'re sad to see you go.');
+      setShowDeleteDialog(false);
+      
+      // Go back to landing page
+      navigate("/")
+
+    }
+    catch(error) {
+      console.error("Deletion failed:", error);
+
+      if (error.code === 'auth/wrong-password') {
+        alert("Incorrect password. Deletion cancelled.");
+      } else {
+        alert(`Error: ${error.message}`);
+      }
+    }
   };
   
-useEffect(() => {
-  // Remove default body margin and set background to match the app
-  document.body.style.margin = '0';
-  document.body.style.backgroundColor = isDarkMode ? '#0f172b' : '#f8fafc';
+  const handleSignOut = () => {
 
-  // Optional: make sure the html element also matches
-  document.documentElement.style.backgroundColor = isDarkMode ? '#0f172b' : '#f8fafc';
+    // Sign out of Firebase
+    signOut(auth);
 
-  // Cleanup when this component unmounts
-  return () => {
-    document.body.style.margin = '';
-    document.body.style.backgroundColor = '';
-    document.documentElement.style.backgroundColor = '';
-  };
-}, [isDarkMode]);
+    alert('You have been signed out.');
+
+    navigate("/")
+
+  }
+
+  const handleSettingsToggle = async (settingKey, currentValue) => {
+
+    const newValue = !currentValue;
+
+    if (settingKey === 'isDarkMode') setIsDarkMode(newValue);
+
+    // Just turns something like username to setUsername and applies the new value
+    setters[`set${settingKey.charAt(0).toUpperCase() + settingKey.slice(1)}`](newValue);
+
+    // Update firebase
+    if(auth.currentUser) {
+
+      try {
+        // Dot notation to update ONLY the specific sub-field
+        await updateDoc(userDocRef, {
+          [`settings.${settingKey}`]: newValue
+        });
+
+        console.log(`${settingKey} updated to ${newValue}`);
+        
+
+      }
+      catch(error) {
+
+        console.error("Update failed:", error);
+        alert("Failed to save preference. Please try again.");
+
+        // Rollback the value to the previous state
+        setters[`set${settingKey.charAt(0).toUpperCase() + settingKey.slice(1)}`](currentValue);
+
+      }
+    }
+
+
+  }
+
+  // Call the settings from Firebase on component mount
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      
+      if (user) {
+        try {
+          console.log("User exists. Accessing document...");
+          
+          const docRef = doc(db, "users", user.uid);
+          setUserDocRef(docRef);
+
+          const docSnap = await getDoc(docRef);
+
+          if (docSnap.exists()) {
+            console.log("Document exists. Applying it to user data");
+            const data = docSnap.data();
+            setUserData(data.settings);
+          } else {
+            console.log("No such document!");
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+        }
+      } else {
+        console.log("No such user!");
+        // Should redirect to login page
+      }
+      // Stop loading whether a user was found 
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Pass the Firebase data into the useSettings hook
+  const { state, setters } = useSettings(userData); 
+
+  useEffect(() => {
+    
+    // Remove default body margin and set background to match the app
+    document.body.style.margin = '0';
+    document.body.style.backgroundColor = isDarkMode ? '#0f172b' : '#f8fafc';
+
+    // Optional: make sure the html element also matches
+    document.documentElement.style.backgroundColor = isDarkMode ? '#0f172b' : '#f8fafc';
+
+    // Cleanup when this component unmounts
+    return () => {
+      document.body.style.margin = '';
+      document.body.style.backgroundColor = '';
+      document.documentElement.style.backgroundColor = '';
+    };
+  }, [isDarkMode]);
+
+  // Handle saving profile changes
+  if (isLoading) {
+    return (
+      <div style={{ 
+        height: '100vh', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        backgroundColor: '#0f172b',
+        color: 'white' 
+      }}>
+        Loading your settings...
+      </div>
+    );
+  }
+
 
   return (
     <div className={isDarkMode ? 'dark' : ''}>
@@ -90,14 +304,16 @@ useEffect(() => {
               display: 'flex',
               alignItems: 'center',
               gap: '8px'
-            }}>
+            }}
+            onClick={handleSignOut}
+            >
                Sign Out
             </button>
           </div>
         </div>
 
         {/* Main Content */}
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '48px 32px' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '48px 32px'}}>
           <h1 style={{ 
             fontSize: '32px', 
             fontWeight: '600', 
@@ -183,7 +399,7 @@ useEffect(() => {
                     fontSize: '32px',
                     fontWeight: '600'
                   }}>
-                    JD
+                    {Array.from(state.firstName)[0] + Array.from(state.lastName)[0]}
                   </div>
                   <div>
                     <button style={{
@@ -221,7 +437,8 @@ useEffect(() => {
                     </label>
                     <input
                       type="text"
-                      defaultValue="John"
+                      defaultValue={state.firstName}
+                      onChange={(e) => setters.setFirstName(e.target.value)}
                       style={{
                         width: '100%',
                         padding: '10px 2px',
@@ -242,7 +459,8 @@ useEffect(() => {
                     </label>
                     <input
                       type="text"
-                      defaultValue="Doe"
+                      defaultValue={state.lastName}
+                      onChange={(e) => setters.setLastName(e.target.value)}
                       style={{
                         width: '100%',
                         padding: '10px 2px',
@@ -266,8 +484,9 @@ useEffect(() => {
                   </label>
                   <input
                     type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    aria-label="username"
+                    value={state.username}
+                    onChange={(e) => setters.setUsername(e.target.value)}
                     style={{
                       width: '100%',
                       padding: '10px 1px',
@@ -290,8 +509,8 @@ useEffect(() => {
                   </label>
                   <textarea
                     rows="4"
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
+                    value={state.bio}
+                    onChange={(e) => setters.setBio(e.target.value)}
                     placeholder="Tell us about yourself and your fitness journey..."
                     style={{
                       width: '100%',
@@ -316,8 +535,8 @@ useEffect(() => {
                       Fitness Goal
                     </label>
                     <select
-                      value={fitnessGoal}
-                      onChange={(e) => setFitnessGoal(e.target.value)}
+                      value={state.fitnessGoal}
+                      onChange={(e) => setters.setFitnessGoal(e.target.value)}
                       style={{
                         width: '100%',
                         padding: '10px 12px',
@@ -342,8 +561,8 @@ useEffect(() => {
                     </label>
                     <input
                       type="number"
-                      value={desiredWeight}
-                      onChange={(e) => setDesiredWeight(e.target.value)}
+                      value={state.desiredWeight}
+                      onChange={(e) => setters.setDesiredWeight(e.target.value)}
                       placeholder="e.g., 165"
                       style={{
                         width: '100%',
@@ -354,6 +573,36 @@ useEffect(() => {
                         color: isDarkMode ? 'white' : '#0f172b'
                       }}
                     />
+                  </div>
+                  
+                  {/* Timezone */}
+                  <div>
+                    <label style={{ 
+                      display: 'block', 
+                      marginBottom: '12px',
+                      color: isDarkMode ? 'white' : '#0f172b'
+                    }}>
+                      Time Zone
+                    </label>
+                    <select 
+                    value={state.timezone}
+                    onChange={(e) =>
+                      setters.setTimezone(e.target.value) 
+                    }
+                    aria-label="Time Zone"
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      border: `1px solid ${isDarkMode ? '#45556c' : '#cad5e2'}`,
+                      borderRadius: '8px',
+                      backgroundColor: isDarkMode ? '#0f172b' : 'white',
+                      color: isDarkMode ? 'white' : '#0f172b'
+                    }}>
+                      <option>Pacific Time (PT)</option>
+                      <option>Mountain Time (MT)</option>
+                      <option>Central Time (CT)</option>
+                      <option>Eastern Time (ET)</option>
+                    </select>
                   </div>
                 </div>
 
@@ -370,6 +619,7 @@ useEffect(() => {
                 >
                   Save Changes
                 </button>
+
               </div>
             </div>
           )}
@@ -407,15 +657,15 @@ useEffect(() => {
                 }}>
                   Change Password
                 </h3>
-                <p style={{ 
+                {/* <p style={{ 
                   fontSize: '14px', 
                   color: isDarkMode ? '#90a1b9' : '#45556c',
                   marginBottom: '16px'
                 }}>
                   Please provide your email to send a password reset link. The link will expire in 20 minutes.
-                </p>
+                </p> */}
 
-                <div style={{ marginBottom: '16px' }}>
+                {/* <div style={{ marginBottom: '16px' }}>
                   <label style={{ 
                     display: 'block', 
                     marginBottom: '8px',
@@ -425,8 +675,8 @@ useEffect(() => {
                   </label>
                   <input
                     type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    value={state.email}
+                    onChange={(e) => setters.setEmail(e.target.value)}
                     style={{
                       width: '100%',
                       padding: '10px 0px',
@@ -436,7 +686,7 @@ useEffect(() => {
                       color: isDarkMode ? 'white' : '#0f172b'
                     }}
                   />
-                </div>
+                </div> */}
 
                 <button 
                   onClick={handleSendResetLink}
@@ -540,8 +790,9 @@ useEffect(() => {
                   <label style={{ position: 'relative', display: 'inline-block', width: '48px', height: '24px' }}>
                     <input 
                       type="checkbox" 
+                      aria-label="Dark Mode"
                       checked={isDarkMode}
-                      onChange={() => setIsDarkMode(!isDarkMode)}
+                      onChange={() => handleSettingsToggle('isDarkMode', isDarkMode)}
                       style={{ opacity: 0, width: 0, height: 0 }}
                     />
                     <span style={{
@@ -597,7 +848,12 @@ useEffect(() => {
                       Receive emails about your meal plans and recipes
                     </div>
                   </div>
-                  <input type="checkbox" defaultChecked style={{ width: '20px', height: '20px' }} />
+                  <input 
+                  type="checkbox" 
+                  checked={state.emailNotifications}
+                  onChange={() => handleSettingsToggle('emailNotifications', state.emailNotifications)}
+                  style={{ width: '20px', height: '20px' }} 
+                  />
                 </div>
 
                 <hr style={{ 
@@ -627,7 +883,12 @@ useEffect(() => {
                       Get reminders for meal times and weekly planning
                     </div>
                   </div>
-                  <input type="checkbox" defaultChecked style={{ width: '20px', height: '20px' }} />
+                  <input 
+                    type="checkbox" 
+                    checked={state.pushNotifications} 
+                    onChange={() => handleSettingsToggle('pushNotifications', state.pushNotifications)} 
+                    style={{ width: '20px', height: '20px' }} 
+                  />
                 </div>
 
                 <hr style={{ 
@@ -657,37 +918,11 @@ useEffect(() => {
                       Stay informed about community recipes and content
                     </div>
                   </div>
-                  <input type="checkbox" defaultChecked style={{ width: '20px', height: '20px' }} />
-                </div>
-
-                <hr style={{ 
-                  border: 'none', 
-                  borderTop: `1px solid ${isDarkMode ? '#45556c' : '#e2e8f0'}`,
-                  margin: '24px 0'
-                }} />
-
-                {/* Timezone */}
-                <div>
-                  <label style={{ 
-                    display: 'block', 
-                    marginBottom: '12px',
-                    color: isDarkMode ? 'white' : '#0f172b'
-                  }}>
-                    Time Zone
-                  </label>
-                  <select style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: `1px solid ${isDarkMode ? '#45556c' : '#cad5e2'}`,
-                    borderRadius: '8px',
-                    backgroundColor: isDarkMode ? '#0f172b' : 'white',
-                    color: isDarkMode ? 'white' : '#0f172b'
-                  }}>
-                    <option>Pacific Time (PT)</option>
-                    <option>Mountain Time (MT)</option>
-                    <option>Central Time (CT)</option>
-                    <option>Eastern Time (ET)</option>
-                  </select>
+                  <input 
+                    type="checkbox" 
+                    checked={state.communityUpdates}
+                    onChange={() => handleSettingsToggle('communityUpdates', state.communityUpdates)} style={{ width: '20px', height: '20px' }} 
+                  />
                 </div>
               </div>
             </div>
@@ -738,7 +973,13 @@ useEffect(() => {
                       Make your profile visible to all users
                     </div>
                   </div>
-                  <input type="checkbox" defaultChecked style={{ width: '20px', height: '20px' }} />
+                  <input 
+                    type="checkbox" 
+                    aria-label='public profile'
+                    checked={state.publicProfile} 
+                    onChange={() => handleSettingsToggle('isPublic', state.isPublic)} 
+                    style={{ width: '20px', height: '20px' }} 
+                  />
                 </div>
               </div>
 
@@ -1029,6 +1270,7 @@ useEffect(() => {
             </div>
           )}
         </div>
+
       </div>
     </div>
   );

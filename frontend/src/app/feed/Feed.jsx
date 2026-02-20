@@ -31,7 +31,7 @@ function getDifficulty(recipe) {
 }
 
 
-// ---- Small reusable UI ---- 
+// Small reusable UI 
 // <chip/> -displays a small label eg ingredients tag
 function Chip({ children }) {
   return <span className="chip">{children}</span>;
@@ -82,7 +82,7 @@ function DifficultyTag({ level }) {
   );
 }
 
-// ---- Heart Button (like/unlike) - toggles between liked/unliked states 
+// Heart Button (like/unlike) - toggles between liked/unliked states 
 function HeartButton({ onClick }) {
 
   const [liked, setLiked] = useState(false); //track like state
@@ -176,30 +176,30 @@ function RecipeCard({ recipe }) {
   );
 }
 
-// ---- Feed Main Component ----
+// Feed Main Component 
 export default function Feed() {
-  //  All hooks stay INSIDE the component
+  
   const recipes = useRecipesStore((state) => state.recipes);
   const loadRecipesFromFirestore = useRecipesStore(
     (state) => state.loadRecipesFromFirestore
   );
   const setRandom = useRecipesStore((state) => state.setRandom);
-  const getRandomRecipe = useRecipesStore((state) => state.getRandomRecipe); // added
+  const getRandomRecipe = useRecipesStore((state) => state.getRandomRecipe); 
 
 
- useEffect(() => { //temp
+ useEffect(() => { 
     getRandomRecipe();
   }, []);
 
 
   useEffect(() => {
-    setRandom(4);               // optional, sets how many random recipes you fetch elsewhere
+    setRandom(4);               // optional, sets how many random recipes to fetch
     loadRecipesFromFirestore(); // loads saved recipes from Firestore into Zustand
   }, [setRandom, loadRecipesFromFirestore]);
 
   return (
     <div className="feed">
-      {/* --- Introduction Section --- */}
+      {/* Introduction Section */}
       <section className="intro">
         <h1 className="intro-title">Discover Macro-Friendly Recipes</h1>
         <p className="intro-sub">
@@ -214,7 +214,7 @@ export default function Feed() {
         </div>
       </header>
 
-      {/* main grid uses recipes from our zustand */}
+      {/* main grid uses recipes from zustand */}
       <section className="grid">
         {recipes.map((r) => (
           <RecipeCard key={r.id} recipe={r} />
