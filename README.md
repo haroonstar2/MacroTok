@@ -3,28 +3,24 @@
 # MacroTok — Frontend (Calendar + Goal)
 Overview
 
-MacroTok is a React-based fitness & nutrition planner that helps users schedule meals, track calorie intake, and discover macro-balanced recipes — all in one clean interface.
-this readME combines a Landing Page, Feed Page, Calendar Planner, Goal Tracker, and Recipe Detail View
+MacroTok is a React-based fitness and nutrition planner. It lets users schedule meals, track calories, and browse macro-balanced recipes in one simple interface.
+
+This frontend includes:
+
+- Landing Page
+- Feed Page
+- Calendar Planner
+- Goal Tracker
+- Recipe Detail View
 
 Tech Stack
-React 18
-Vite
-Plain CSS
-Hooks + Component-based state management
-No backend required (local mock recipe DB)
-Optional API setup ready for expansion
-Overview
+- React 18
+- Vite
+- Plain CSS
+- Firebase SDK
 
-MacroTok is a React-based fitness & nutrition planner that helps users schedule meals, track calorie intake, and discover macro-balanced recipes — all in one clean interface.
-this readME combines a Landing Page, Feed Page, Calendar Planner, Goal Tracker, and Recipe Detail View
+[Test Case Document](https://docs.google.com/spreadsheets/d/11eN6jlCc2WGbhi0SdFV2t9eHWWzdylhxalVzqCzvMi0/edit?usp=sharing)
 
-Tech Stack
-React 18
-Vite
-Plain CSS
-Hooks + Component-based state management
-No backend required (local mock recipe DB)
-Optional API setup ready for expansion
 ##  Quick Start
 ```bash
 npm install
