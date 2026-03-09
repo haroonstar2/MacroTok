@@ -1,4 +1,4 @@
-# Logs
+(Optional)const storage = getStorage(app);# Logs
 logs
 *.log
 npm-debug.log*
@@ -30,4 +30,6 @@ dist-ssr
 firebaseConfig.js
 firebase*
 fireBase*
+FirebaseConfig.js
 frontend/src/firebase.js
+frontend/src/store/actual_spoonacular_recipes.js
