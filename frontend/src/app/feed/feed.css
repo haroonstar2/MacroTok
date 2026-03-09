@@ -1,0 +1,201 @@
+/* ---------- Feed Page ---------- 
+Purpose: Layout + card grid + micro-components (chips, stat bars)
+Notes: Supports toggle states for Like (Heart) and Schedule (Calendar).
+*/
+
+:root {
+  --bg: #f6f7f8;    /* page background */
+  --panel: #ffffff;  /* card panels/Surfaces */
+  --soft: #eef1f3;   /* soft neural background spacers */
+  --ring: #e2e5e9;    /* subtle borders / dividers */
+  --text: #171a1f;   /* primary text */
+  --muted: #6b7280;  /* secondary text */
+  --chip: #f1f2f4;   /* pill background */
+  --shadow: 0 6px 18px rgba(16, 24, 40, .08);
+
+  --blue: #3b82f6;   /* protein / calendar active */
+  --green: #22c55e;  /* carbs */
+  --orange: #f59e0b; /* fats */
+}
+
+/* Global Sizing */
+.feed, .feed * { box-sizing: border-box; }
+
+.feed {
+  color: var(--text);
+  background: var(--bg);
+  padding: 0 20px 28px;
+}
+
+/* ---------- Header & Search ---------- */
+.feed-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 0 8px;
+}
+
+.feed .search input {
+  background: #2b2f33;
+  color: #fff;
+  border: none;
+  outline: none;
+  border-radius: 12px;
+  padding: 12px 14px;
+  min-width: 280px;
+}
+
+/* ---------- Intro Section ---------- */
+.intro { padding: 10px 0 20px; }
+
+.intro-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 6px;
+}
+
+/* ---------- Grid Layout ---------- */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+@media (max-width: 1024px) {
+  .grid { grid-template-columns: 1fr; }
+}
+
+/* ---------- Recipe Card ---------- */
+.card {
+  background: var(--panel);
+  border: 1px solid var(--ring);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-media {
+  position: relative;
+  height: 200px;
+}
+
+.card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ---------- Action Buttons (Toggle States) ---------- */
+.card-actions {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+}
+
+.heart, .calendar-trigger {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  color: #111;
+  border: 1px solid var(--ring);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.2s ease;
+}
+
+.heart:hover, .calendar-trigger:hover {
+  transform: scale(1.1);
+}
+
+/* Calendar: Blue toggle state */
+.calendar-trigger.scheduled {
+  background-color: var(--blue);
+  color: #fff;
+  border-color: var(--blue);
+}
+
+/* Heart: Red toggle state */
+.heart.liked {
+  color: #e63946;
+}
+
+/* ---------- Date Picker Popover ---------- */
+.date-picker-popover {
+  position: absolute;
+  top: 55px;
+  right: 0;
+  background: #fff;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid var(--ring);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  z-index: 20;
+}
+
+/* ---------- Card Content ---------- */
+.card-body { padding: 16px; }
+
+.meta {
+  display: flex;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+/* ---------- Macro Bars ---------- */
+.stats {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.progress {
+  height: 8px;
+  background: #e9eef2;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill { height: 100%; }
+.progress--protein .progress-fill { background: var(--blue); }
+.progress--carbs   .progress-fill { background: var(--green); }
+.progress--fats    .progress-fill { background: var(--orange); }
+
+/* ---------- Ingredient Chips ---------- */
+.chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  background: var(--chip);
+  border: 1px solid var(--ring);
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+/* Interaction */
+.card-link:hover .card {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0,0,0,.12);
+}

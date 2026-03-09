@@ -1,0 +1,123 @@
+:root {
+  --sb-bg: #fff;
+  --sb-ring: #e2e5e9;
+  --sb-muted: #6b7280;
+  --sb-brand: #22c55e;
+  --sb-chip: #f1f2f4;
+  --sb-shadow: 0 6px 18px rgba(16, 24, 40, .06);
+}
+
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f6f7f8;
+}
+
+.main {
+  flex: 1;
+  padding: 20px;
+}
+
+.sidebar {
+  width: 260px;
+  min-width: 250px;
+  flex-shrink: 0;
+  background: var(--sb-bg);
+  border-right: 1px solid var(--sb-ring);
+  box-shadow: var(--sb-shadow);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding: 20px 16px;
+}
+
+.sb-brand {
+  color: #22a35a;
+  font-weight: 700;
+  font-size: 20px;
+  margin: 6px 8px 16px;
+  cursor: pointer;
+}
+
+.sb-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--sb-ring);
+}
+
+.sb-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid transparent;
+  background: #fff;
+  color: #1f2937;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sb-item:hover {
+  background-color: var(--sb-chip);
+}
+
+/* Active State: Turns Green */
+.sb-item.active {
+  background: linear-gradient(90deg, #34d399, #22c55e);
+  color: #fff;
+}
+
+.sb-item.active .sb-icn svg {
+  stroke: #fff;
+  fill: #fff; /* This fills the heart when liked page is active */
+}
+
+.sb-icn {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  color: inherit;
+}
+
+.sb-profile {
+  margin-top: auto;
+  padding: 16px;
+  border-top: 1px solid var(--sb-ring);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.sb-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(90deg, #34d399, #22c55e);
+  flex-shrink: 0;
+}
+
+.sb-avatar-img {
+  object-fit: cover;
+  background: none;
+}
+
+.sb-profile-title {
+  font-weight: 600;
+}
+
+.sb-profile-sub {
+  color: var(--sb-muted);
+  font-size: 12px;
+}

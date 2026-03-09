@@ -1,0 +1,374 @@
+
+/* =============================================================
+   LANDING PAGE STYLES (MacroTok)
+   -------------------------------------------------------------
+   Includes:
+     • Light/Dark theme tokens
+     • Header, Hero, Features, How-It-Works, and Footer layouts
+     • Responsive adjustments for tablets/phones
+   ============================================================= */
+
+/* =============================================================
+   THEME TOKENS
+   -------------------------------------------------------------
+   Default: Light mode (root)
+   When <html> or <body> has .dark → overrides below apply.
+   All components read from these CSS variables.
+   ============================================================= */
+   :root,
+   html:not(.dark) {
+     /* Light Theme Colors */
+     --bg: #f8f9fc;           /* Page background */
+     --panel: #ffffff;        /* Panels, cards, containers */
+     --text: #13141a;         /* Primary text */
+     --muted: #5a6072;        /* Secondary text (labels, subtitles) */
+     --border: #e8e9ef;       /* Dividers, outlines, light borders */
+     --accent: #6b46ff;       /* Brand accent color (purple) */
+     --shadow: 0 10px 30px rgba(0, 0, 0, .12); /* Soft drop shadow */
+     --radius: 16px;          /* Default border radius */
+   }
+   
+   /* Dark Theme Overrides */
+   html.dark,
+   body.dark {
+     --bg: #0b0c10;
+     --panel: #121318;
+     --text: #e6e7eb;
+     --muted: #a8adbb;
+     --border: #242632;
+     --accent: #7c5cff;
+     --shadow: 0 10px 30px rgba(0, 0, 0, .25);
+     --radius: 16px;
+   }
+   
+   /* Apply box-sizing globally for predictable spacing */
+   * { box-sizing: border-box; }
+   
+   /* =============================================================
+      PAGE ROOT CONTAINER
+      -------------------------------------------------------------
+      Controls typography and global background/text colors.
+      ============================================================= */
+   .landing {
+     min-height: 100dvh;
+     background: var(--bg);
+     color: var(--text);
+     font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+   }
+   
+   /* =============================================================
+      HEADER
+      -------------------------------------------------------------
+      Sticky header that stays visible when scrolling.
+      Includes brand logo and navigation with buttons.
+      ============================================================= */
+   .landing__header {
+     position: sticky;
+     top: 0;
+     display: flex;
+     align-items: center;
+     justify-content: space-between;
+     gap: 16px;
+     padding: 16px 20px;
+     border-bottom: 1px solid var(--border);
+     background: color-mix(in oklab, var(--bg) 90%, transparent); /* subtle transparency */
+     backdrop-filter: blur(6px); /* adds a frosted-glass effect */
+   }
+   
+   /* Brand logo and name */
+   .brand {
+     display: flex;
+     align-items: center;
+     gap: 10px;
+     font-weight: 700;
+   }
+   .brand__dot {
+     width: 12px;
+     height: 12px;
+     border-radius: 50%;
+     background: var(--accent);
+     box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 40%, transparent);
+   }
+   .brand__name { letter-spacing: .2px; }
+   
+   /* Navigation links */
+   .nav {
+     display: flex;
+     align-items: center;
+     gap: 10px;
+   }
+   .nav__link {
+     color: var(--muted);
+     text-decoration: none;
+     padding: 8px 10px;
+     border-radius: 10px;
+     transition: background .2s ease, color .2s ease;
+   }
+   .nav__link:hover {
+     background: var(--panel);
+     color: var(--text);
+   }
+   
+   /* =============================================================
+      BUTTONS
+      -------------------------------------------------------------
+      Shared styles for all buttons (ghost / outline / filled).
+      ============================================================= */
+   .btn {
+     border: 1px solid var(--border);
+     background: var(--panel);
+     color: var(--text);
+     padding: 8px 14px;
+     border-radius: 12px;
+     cursor: pointer;
+     box-shadow: var(--shadow);
+     transition: background .2s ease, color .2s ease;
+   }
+   .btn--ghost { background: transparent; box-shadow: none; }
+   .btn--outline { background: transparent; }
+   .btn--filled {
+     background: var(--accent);
+     border-color: var(--accent);
+     color: white;
+   }
+   .btn--lg {
+     padding: 12px 18px;
+     border-radius: 14px;
+     font-weight: 600;
+   }
+   
+   /* =============================================================
+      HERO SECTION
+      -------------------------------------------------------------
+      Split grid layout: text on left, image or card on right.
+      Includes headline, subtitle, CTA buttons, and key points.
+      ============================================================= */
+   .hero {
+     display: grid;
+     grid-template-columns: 1.1fr .9fr;
+     gap: 28px;
+     padding: 48px 20px;
+     max-width: 1080px;
+     margin: 0 auto;
+   }
+   
+   /* Typography and spacing inside hero */
+   .hero__title {
+     font-size: clamp(28px, 5vw, 44px);
+     margin: 0 0 10px;
+   }
+   .hero__subtitle {
+     color: var(--muted);
+     max-width: 56ch;
+   }
+   .hero__cta {
+     display: flex;
+     gap: 10px;
+     margin: 18px 0 8px;
+   }
+   .hero__points {
+     margin: 10px 0 0;
+     padding-left: 18px;
+     color: var(--muted);
+   }
+   .hero__points li { margin: 6px 0; }
+   
+   /* =============================================================
+      HERO PREVIEW CARD (optional UI example)
+      -------------------------------------------------------------
+      Styled like a small nutrition or progress card preview.
+      ============================================================= */
+   .hero__card {
+     background: var(--panel);
+     border: 1px solid var(--border);
+     border-radius: var(--radius);
+     box-shadow: var(--shadow);
+     overflow: hidden;
+     align-self: start;
+   }
+   .card__header {
+     display: flex;
+     gap: 8px;
+     padding: 10px 12px;
+     border-bottom: 1px solid var(--border);
+   }
+   .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+   /* Traffic light colors (like macOS window dots) */
+   .red { background: #ff5f57; }
+   .yellow { background: #febc2e; }
+   .green { background: #28c840; }
+   
+   .card__body {
+     padding: 16px;
+     display: grid;
+     gap: 16px;
+   }
+   
+   /* Nutritional info bars */
+   .kcal__label { color: var(--muted); font-size: 12px; }
+   .kcal__value { font-weight: 700; margin-top: 4px; }
+   .kcal__bar {
+     height: 10px;
+     background: var(--border);
+     border-radius: 10px;
+     overflow: hidden;
+     margin-top: 8px;
+   }
+   .kcal__bar span {
+     display: block;
+     height: 100%;
+     background: var(--accent);
+   }
+   
+   /* Mini metric tiles */
+   .mini-grid {
+     display: grid;
+     grid-template-columns: repeat(2, 1fr);
+     gap: 10px;
+   }
+   .mini-tile {
+     border: 1px solid var(--border);
+     border-radius: 12px;
+     padding: 10px;
+     background: color-mix(in oklab, var(--panel) 90%, transparent);
+   }
+   .mini-tile__title { font-weight: 600; margin-bottom: 4px; }
+   .mini-tile__text { color: var(--muted); font-size: 14px; }
+   
+   .card__actions { display: flex; gap: 8px; }
+   
+   /* =============================================================
+      HERO IMAGE
+      -------------------------------------------------------------
+      Used when showing a static or rotating hero image.
+      Adds hover zoom and fade-in animation.
+      ============================================================= */
+   .hero__image {
+     display: flex;
+     justify-content: center;
+     align-items: center;
+     animation: fadeIn 0.8s ease-in-out;
+   }
+   .hero__image img {
+     width: 100%;
+     max-width: 460px;
+     border-radius: var(--radius);
+     box-shadow: var(--shadow);
+     transition: transform 0.3s ease, box-shadow 0.3s ease;
+   }
+   .hero__image img:hover {
+     transform: scale(1.03);
+     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+   }
+   /* Simple fade/slide animation */
+   @keyframes fadeIn {
+     from { opacity: 0; transform: translateY(20px); }
+     to { opacity: 1; transform: translateY(0); }
+   }
+   
+   /* =============================================================
+      FEATURES SECTION
+      -------------------------------------------------------------
+      Displays 4 main feature cards in a responsive grid.
+      ============================================================= */
+   .features {
+     padding: 48px 20px;
+     max-width: 1080px;
+     margin: 0 auto;
+   }
+   .section__title {
+     font-size: 24px;
+     margin: 0 0 18px;
+   }
+   .features__grid {
+     display: grid;
+     grid-template-columns: repeat(4, 1fr);
+     gap: 14px;
+   }
+   .feature {
+     background: var(--panel);
+     border: 1px solid var(--border);
+     border-radius: var(--radius);
+     padding: 16px;
+     box-shadow: var(--shadow);
+   }
+   .feature__icon { font-size: 22px; }
+   .feature__title { margin: 8px 0 4px; }
+   .feature__text { color: var(--muted); }
+   
+   /* =============================================================
+      "HOW IT WORKS" SECTION
+      -------------------------------------------------------------
+      Simple 3-step instructional cards in grid format.
+      ============================================================= */
+   .how {
+     padding: 24px 20px 48px;
+     max-width: 1080px;
+     margin: 0 auto;
+   }
+   .steps {
+     list-style: none;
+     padding: 0;
+     display: grid;
+     grid-template-columns: repeat(3, 1fr);
+     gap: 12px;
+   }
+   .step {
+     background: var(--panel);
+     border: 1px solid var(--border);
+     border-radius: var(--radius);
+     padding: 16px;
+     display: flex;
+     gap: 10px;
+     align-items: center;
+     box-shadow: var(--shadow);
+   }
+   .step span {
+     width: 28px;
+     height: 28px;
+     display: grid;
+     place-items: center;
+     border-radius: 8px;
+     background: var(--accent);
+     color: white;
+     font-weight: 700;
+   }
+   
+   /* =============================================================
+      FOOTER
+      -------------------------------------------------------------
+      Simple centered footer with links and muted text.
+      ============================================================= */
+   .footer {
+     padding: 30px 20px;
+     border-top: 1px solid var(--border);
+   }
+   .footer__row {
+     max-width: 1080px;
+     margin: 0 auto;
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+     color: var(--muted);
+   }
+   .footer__links {
+     display: flex;
+     gap: 12px;
+   }
+   .footer__links a {
+     color: var(--muted);
+     text-decoration: none;
+   }
+   .footer__links a:hover { color: var(--text); }
+   
+   /* =============================================================
+      RESPONSIVE ADJUSTMENTS
+      -------------------------------------------------------------
+      Simplifies grid layouts for narrower viewports.
+      ============================================================= */
+   @media (max-width: 920px) {
+     .hero { grid-template-columns: 1fr; }           /* stack hero vertically */
+     .features__grid { grid-template-columns: 1fr 1fr; } /* 2 columns for features */
+     .steps { grid-template-columns: 1fr; }          /* stack steps vertically */
+   }
+   
