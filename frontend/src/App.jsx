@@ -9,14 +9,6 @@
  *   3. Planner Page (Calendar + Goal Tracker)
  *
  * Uses React Router for navigation and a global light/dark theme.
- * ------------------------------------------------------------
- */
-
-/**
- * App.jsx
- * ------------------------------------------------------------
- * MacroTok — Main Application Component
- * ------------------------------------------------------------
  */
 
 import React, { useEffect, useState } from "react";
@@ -27,10 +19,10 @@ import {
   useNavigate,
   useParams,
   Outlet,
-  useLocation
+  useLocation,
 } from "react-router-dom";
 
-import MacroTokLogin from "./app/login/MacroTokLogin"
+import MacroTokLogin from "./app/login/MacroTokLogin";
 import Calendar from "./app/calendar/Calendar";
 import Goal from "./app/calendar/Goal";
 import Landing from "./app/landing/Landing";
@@ -41,16 +33,13 @@ import SettingsPage from "./app/profile/SettingsPage";
 import useRecipesStore from "./store/recipeStore";
 import "./app/sidebar/sidebar.css";
 import "./App.css";
+import UserProvider, { ProtectedRoute } from "../UserContext";
 
-
-// Layout component that renders the sidebar and the active tab. 
+// Layout component that renders the sidebar and the active tab.
 function AppLayout() {
-
   const location = useLocation();
 
-  const active = location.pathname.startsWith("/calendar")
-    ? "plan"
-    : "home";
+  const active = location.pathname.startsWith("/calendar") ? "plan" : "home";
 
   const navigate = useNavigate();
   // hook sidebar buttons into routes
@@ -63,7 +52,7 @@ function AppLayout() {
         navigate("/calendar");
         break;
       case "settings":
-        navigate("/settings")
+        navigate("/settings");
       default:
         break;
     }
@@ -71,7 +60,7 @@ function AppLayout() {
 
   return (
     <div className="layout">
-      <Sidebar active={active} onNav={handleSidebarNav}/>
+      <Sidebar active={active} onNav={handleSidebarNav} />
 
       <div className="layout-main">
         <Outlet />
@@ -89,7 +78,7 @@ function PlannerPage() {
     lunch: { calories: 0 },
     dinner: { calories: 0 },
   });
-  
+
   const loadDeficitExample = () => {
     setMealData({
       breakfast: { calories: 500 },
@@ -117,7 +106,6 @@ function PlannerPage() {
   return (
     <div className="layout">
       <div className="layout-main">
-
         <div className="planner-buttons">
           <button className="cal-btn" onClick={loadDeficitExample}>
             Example: Deficit
@@ -167,21 +155,37 @@ export default function App() {
   }, [isDark]);
 
   return (
-    <div className={isDark ? "app app--dark" : "app app--light"}>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<MacroTokLogin />}/>
-          <Route path="/settings" element={<SettingsPage/>} />
+    <UserProvider>
+      <div className={isDark ? "app app--dark" : "app app--light"}>
+        <Router>
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<MacroTokLogin />} />
 
-          <Route element={<AppLayout/>}>
-            <Route path="/feed" element={<Feed />} />
-            <Route path="/calendar" element={<PlannerPage />} />
-            <Route path="/recipe/:id" element={<RecipePage />} />
-          </Route>
+            {/* Protected individual route */}
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <SettingsPage />
+                </ProtectedRoute>
+              }
+            />
 
-        </Routes>
-      </Router>
-    </div>
+            <Route
+              element={
+                <ProtectedRoute>
+                  <AppLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route path="/feed" element={<Feed />} />
+              <Route path="/calendar" element={<PlannerPage />} />
+              <Route path="/recipe/:id" element={<RecipePage />} />
+            </Route>
+          </Routes>
+        </Router>
+      </div>
+    </UserProvider>
   );
 }

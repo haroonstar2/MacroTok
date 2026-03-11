@@ -16,22 +16,21 @@ const useSettings = (data) => {
     const [timezone, setTimezone] = useState(null);
 
     useEffect(() => {
-
         if (!data) return;
 
-        setUsername(data.username  ||  "");
-        setFirstName(data.firstName || "");
-        setLastName(data.lastName || "");
-        setBio(data.bio  ||  "");
-        setFitnessGoal(data.fitnessGoal || 'lose_weight');
-        setDesiredWeight(data.desiredWeight || '');
-        setEmailNotifications(data.emailNotifications || true);
-        setPushNotifications(data.pushNotifications || true);
-        setCommunityUpdates(data.communityUpdates || true);
-        setIsPublic(data.isPublic || true);
-        setIsDarkMode(data.darkMode || false);
-        setTimezone(data.timezone || null);
-
+        setUsername(data.username ?? "");
+        setFirstName(data.firstName ?? "");
+        setLastName(data.lastName ?? "");
+        setBio(data.bio ?? "");
+        setFitnessGoal(data.fitnessGoal ?? 'lose_weight');
+        setDesiredWeight(data.desiredWeight ?? '');
+        
+        setEmailNotifications(data.emailNotifications ?? true);
+        setPushNotifications(data.pushNotifications ?? true);
+        setCommunityUpdates(data.communityUpdates ?? true);
+        setIsPublic(data.isPublic ?? true);
+        setIsDarkMode(data.isDarkMode ?? false); 
+        setTimezone(data.timezone ?? "Pacific Time (PT)");
     }, [data]);
 
     return {
