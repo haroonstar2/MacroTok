@@ -8,7 +8,7 @@ import {
   sendPasswordResetEmail,
 } from "firebase/auth";
 
-// DOM elements 
+// DOM elements
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
 const signinBtn = document.getElementById("signin-btn");
@@ -26,7 +26,7 @@ const modalTitle = document.getElementById("notification-title");
 const modalMessage = document.getElementById("notification-message");
 const modalClose = document.getElementById("notification-close");
 
-// Helpers 
+// Helpers
 function showNotification(title, message) {
   modalTitle.textContent = title;
   modalMessage.textContent = message;
@@ -34,7 +34,7 @@ function showNotification(title, message) {
 }
 modalClose.addEventListener("click", () => modal.classList.add("hidden"));
 
-// Auth state 
+// Auth state
 onAuthStateChanged(auth, (user) => {
   if (user) {
     authStatus.textContent = `Welcome, ${user.email}! (You are signed in)`;
@@ -47,7 +47,7 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-// Email/Password Sign-In 
+// Email/Password Sign-In
 signinBtn.addEventListener("click", async () => {
   const email = emailInput.value;
   const password = passwordInput.value;
@@ -64,64 +64,88 @@ signinBtn.addEventListener("click", async () => {
       error.code === "auth/wrong-password" ||
       error.code === "auth/user-not-found"
     ) {
-      showNotification("Sign In Failed", "Invalid email or password. Please try again.");
+      showNotification(
+        "Sign In Failed",
+        "Invalid email or password. Please try again.",
+      );
     } else {
       showNotification("Sign In Error", error.message);
     }
   }
 });
 
-// Google Sign-In 
+// Google Sign-In
 googleSigninBtn.addEventListener("click", async () => {
   try {
     const result = await signInWithPopup(auth, provider);
-    showNotification("Success!", `Welcome, ${result.user.displayName || "User"}!`);
+    showNotification(
+      "Success!",
+      `Welcome, ${result.user.displayName || "User"}!`,
+    );
   } catch (error) {
     showNotification("Google Sign In Error", error.message);
   }
 });
 
-// Sign Up 
+// Sign Up
 signupLink.addEventListener("click", async () => {
   const email = emailInput.value;
   const password = passwordInput.value;
 
   if (!email || !password) {
-    showNotification("Sign Up Error", "Please enter an email and password in the fields first.");
+    showNotification(
+      "Sign Up Error",
+      "Please enter an email and password in the fields first.",
+    );
     return;
   }
   if (password.length < 6) {
-    showNotification("Sign Up Error", "Password must be at least 6 characters long.");
+    showNotification(
+      "Sign Up Error",
+      "Password must be at least 6 characters long.",
+    );
     return;
   }
   try {
     await createUserWithEmailAndPassword(auth, email, password);
-    showNotification("Account Created!", "Your account has been successfully created. You are now signed in.");
+    showNotification(
+      "Account Created!",
+      "Your account has been successfully created. You are now signed in.",
+    );
   } catch (error) {
     if (error.code === "auth/email-already-in-use") {
-      showNotification("Sign Up Failed", "This email address is already in use.");
+      showNotification(
+        "Sign Up Failed",
+        "This email address is already in use.",
+      );
     } else {
       showNotification("Sign Up Error", error.message);
     }
   }
 });
 
-// Forgot Password 
+// Forgot Password
 forgotPasswordLink.addEventListener("click", async () => {
   const email = emailInput.value;
   if (!email) {
-    showNotification("Password Reset", "Please enter your email address first.");
+    showNotification(
+      "Password Reset",
+      "Please enter your email address first.",
+    );
     return;
   }
   try {
     await sendPasswordResetEmail(auth, email);
-    showNotification("Check Your Email", `A password reset link has been sent to ${email}.`);
+    showNotification(
+      "Check Your Email",
+      `A password reset link has been sent to ${email}.`,
+    );
   } catch (error) {
     showNotification("Password Reset Error", error.message);
   }
 });
 
-// Toggle Password Visibility 
+// Toggle Password Visibility
 togglePassword.addEventListener("click", () => {
   const isPassword = passwordInput.type === "password";
   passwordInput.type = isPassword ? "text" : "password";
