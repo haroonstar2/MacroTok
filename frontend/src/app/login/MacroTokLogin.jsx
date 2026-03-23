@@ -1,21 +1,23 @@
 import React, { useState } from "react";
 import "./login.css";
-import "./style.css"
+import "./style.css";
 import { useNavigate } from "react-router-dom";
 import { db, auth, provider } from "../../startFirebase";
 
-import { 
+import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signInWithPopup,
   sendPasswordResetEmail,
   getAdditionalUserInfo,
-  signOut
+  signOut,
 } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 
+import { useUser } from "../../UserContext";
 
 export default function MacroTokLogin() {
+  const { user, setUser, googleSignIn, emailSignIn, emailSignUp } = useUser();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,136 +28,90 @@ export default function MacroTokLogin() {
   const navigate = useNavigate();
 
   const handleGoogleSignIn = async () => {
-    
+    // await googleSignIn();
+
     try {
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-
-        const details = await getAdditionalUserInfo(result);
-        const isNewUser = details?.isNewUser;
-
-        if (isNewUser) {
-            // Create a document in the users collection with the user uid as the ID.
-          await setDoc(doc(db, "users", user.uid), {
-            email: user.email,
-            displayName: user.displayName,
-            createdAt: new Date(),
-            lastLogin: new Date(),
-            // Default values for new users
-            settings: {
-              bio: "",
-              communityUpdates: true,
-              darkMode: false,
-              desiredWeight: 165,
-              emailNotifications: true,
-              fitnessGoal: "Lose Weight",
-              isPublic: true,
-              measurements: "imperial",
-              pushNotifications: true
-            }
-          });
-        }
-
-        alert(`Success: Welcome, ${user.displayName}!`);
-        navigate("/feed");
+      const user = await googleSignIn();
+      alert(`Success: Welcome, ${user.displayName}!`);
+      navigate("/feed");
     } catch (error) {
-        console.error("Google sign in error:", error.code, error.message);
-        alert(`Google Sign In Error ${error.message}`);
+      console.error("Google sign in error:", error.code, error.message);
+      alert(`Google Sign In Error ${error.message}`);
     }
-  }
+  };
 
   const handleEmailSignIn = async () => {
-
     if (!email || !password) {
+      console.error("Email and password are required.");
+      alert("Email and password are required.");
+      return;
+    }
+
+    try {
+      const user = await emailSignIn();
+      alert(`Success: Welcome, ${user.displayName || user.email}!`);
+      navigate("/feed");
+    } catch (error) {
+      console.error("Email sign in error:", error.code, error.message);
+      alert(`Email Sign In Error ${error.message}`);
+    }
+  };
+
+  const handleSignUp = async () => {
+    if (!email || !password) {
+      console.error("Email and password are required.");
       alert("Error: Please enter both email and password.");
       return;
     }
 
+    if (password != confirmPassword) {
+      console.error("Passwords do not match.");
+      alert("Error: Passwords do not match.");
+      return;
+    }
+
+    if (password.length < 6) {
+      alert("Error: Password must be at least 6 characters long.");
+      return;
+    }
+
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      console.log("Sign in successful:", userCredential.user);
-      alert("Success: You are now signed in.");
+      await emailSignUp(email, password, user?.displayName);
+      console.log("User document created");
+      console.log("Sign up successful:", userCredential.user);
+
+      alert(
+        "Account Created!: Your account has been successfully created. You are now signed in.",
+      );
+
       navigate("/feed");
-    } catch(error) {
-      console.error("Sign in error:", error.code, error.message);
-      if (error.code === "auth/invalid-credential" || error.code === "auth/wrong-password" || error.code === "auth/user-not-found") {
-          alert("Sign In Failed: Invalid email or password. Please try again.");
+    } catch (error) {
+      console.error("Sign up error:", error.code, error.message);
+      if (error.code === "auth/email-already-in-use") {
+        alert("Sign Up Failed: This email address is already in use.");
       } else {
-          alert(`Sign In Error: ${error.message}`);
+        alert(`Sign Up Error: ${error.message}`);
       }
     }
-  }
-
-  const handleSignUp = async () => {
-    console.log(password);
-    console.log(confirmPassword);
-
-    if (!email || !password) {
-      alert("Sign Up Error: Please enter an email and password in the fields first.");
-      return;
-    }
-    if (password != confirmPassword) {
-      alert("Error: Passwords do not match. Please try again.");
-      return;
-    }
-    if (password.length < 6) {
-      alert("Sign Up Error: Password must be at least 6 characters long.");
-      return;
-    }
-
-    try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-
-        const user = userCredential.user;
-
-        // Create a document in the users collection with the user uid as the ID.
-        await setDoc(doc(db, "users", user.uid), {
-          email: user.email,
-          displayName: name,
-          createdAt: new Date(),
-          lastLogin: new Date(),
-          // Default values for new users
-          settings: {
-            bio: "",
-            communityUpdates: true,
-            darkMode: false,
-            desiredWeight: 165,
-            emailNotifications: true,
-            fitnessGoal: "Lose Weight",
-            isPublic: true,
-            measurements: "imperial",
-            pushNotifications: true
-          }
-        });
-
-        console.log("User document created");      
-        console.log("Sign up successful:", userCredential.user);
-        alert("Account Created!: Your account has been successfully created. You are now signed in.");
-        navigate("/feed")
-    } catch (error) {
-        console.error("Sign up error:", error.code, error.message);
-        if (error.code === "auth/email-already-in-use") {
-            alert("Sign Up Failed: This email address is already in use.");
-        } else {
-            alert(`Sign Up Error: ${error.message}`);
-        }
-    }
-
-  }
+  };
 
   const handleForgetPassword = async () => {
     if (!email) {
-      alert("Password Reset: Please enter your email address in the email field first.");
+      alert(
+        "Password Reset: Please enter your email address in the email field first.",
+      );
       return;
     }
     try {
-        await sendPasswordResetEmail(auth, email);
-        alert(`Check Your Email: A password reset link has been sent to ${email}.`);
+      await sendPasswordResetEmail(auth, email);
+      alert(
+        `Check Your Email: A password reset link has been sent to ${email}.`,
+      );
     } catch (error) {
-        console.error("Password reset error:", error);
-        alert(`Password Reset Error: ${error.message}`);
+      console.error("Password reset error:", error);
+      alert(`Password Reset Error: ${error.message}`);
     }
-  }
+  };
 
   return (
     <div className="modern-login-page">
@@ -187,7 +143,10 @@ export default function MacroTokLogin() {
             </div>
           </div>
 
-          <button id="google-signin-btn" className="button" type="button"
+          <button
+            id="google-signin-btn"
+            className="button"
+            type="button"
             onClick={handleGoogleSignIn}
           >
             <img
@@ -206,15 +165,16 @@ export default function MacroTokLogin() {
             </div>
           </div>
 
-          <form className="form" 
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (isSignUp) {
-              handleSignUp();
-            } else {
-              handleEmailSignIn();
-            }
-          }}
+          <form
+            className="form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (isSignUp) {
+                handleSignUp();
+              } else {
+                handleEmailSignIn();
+              }
+            }}
           >
             {isSignUp && (
               <div className="container-9">
@@ -290,9 +250,7 @@ export default function MacroTokLogin() {
                   />
                   <div
                     className="icon-wrapper"
-                    onClick={() =>
-                      setShowConfirmPassword(!showConfirmPassword)
-                    }
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
                     <img
                       src="https://c.animaapp.com/jsUBuoxq/img/button.svg"
@@ -313,9 +271,7 @@ export default function MacroTokLogin() {
 
           <div className="paragraph-2">
             <p className="don-t-have-an">
-              {isSignUp
-                ? "Already have an account?"
-                : "Don't have an account?"}
+              {isSignUp ? "Already have an account?" : "Don't have an account?"}
             </p>
             <button className="button-4" onClick={() => setIsSignUp(!isSignUp)}>
               <div className="text-wrapper-8">

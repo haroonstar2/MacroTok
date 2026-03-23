@@ -2,6 +2,17 @@
   text-align: center;
 }
 
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.layout-main {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+}
+
 .App-logo {
   height: 40vmin;
   pointer-events: none;

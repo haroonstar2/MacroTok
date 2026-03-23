@@ -1,37 +1,93 @@
-import React, { useState, useEffect } from "react";
-import { auth, db } from "../../startFirebase";
-import userEvent from "@testing-library/user-event";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { auth } from "../../startFirebase";
 
 import { sendPasswordResetEmail, signOut } from "firebase/auth";
 
 import useSettings from "./useSettings";
-import { useUser } from "../../../UserContext";
+import { useUser } from "../../UserContext";
 
 export default function SettingsPage() {
-  const { userData, updateSettings, deleteAccount, loading } = useUser();
-  const { state, setters } = useSettings(userData?.settings || {});
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  const {
+    user,
+    userData,
+    updateSettings,
+    deleteAccount,
+    loading: userLoading,
+  } = useUser();
+  const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState("profile");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showDeactivateDialog, setShowDeactivateDialog] = useState(false);
 
-  const navigate = useNavigate();
-  const isDarkMode = userData?.settings?.isDarkMode ?? false;
+  // Profile picture
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
+
+  // Pass the Firebase data into the useSettings hook
+  const { state, setters } = useSettings(userData?.settings || {});
+
+  useEffect(() => {
+    if (userData?.settings?.photoURL) {
+      setters.setPhotoURL(userData.settings.photoURL);
+    }
+  }, [userData]);
 
   const handleSaveProfile = async () => {
     try {
-      // Pass the entire 'state' object from useSettings
-      await updateSettings(state);
+      await updateSettings({
+        ...state,
+        ...(state.photoURL ? { photoURL: state.photoURL } : {}),
+      });
       alert("Profile updated successfully!");
     } catch (error) {
+      console.error("Error updating profile:", error);
       alert("Failed to update profile.");
     }
   };
 
-  const handleSendResetLink = async () => {
-    const user = auth.currentUser;
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
+    if (!allowedTypes.includes(file.type)) {
+      alert("Only JPG, PNG or GIF files are allowed.");
+      return;
+    }
+    if (file.size > 500 * 1024) {
+      alert("File must be smaller than 500KB.");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      // Convert image to base64
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      // Update UI immediately
+      setters.setPhotoURL(base64);
+
+      // Save base64 string directly to Firestore
+      await updateSettings({ photoURL: base64 });
+    } catch (err) {
+      console.error("Photo upload failed:", err);
+      alert("Failed to upload photo. Please try again.");
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleSendResetLink = async () => {
     if (!user || !user.email) {
       alert("Error: User session not found. Please log in again.");
       return;
@@ -63,29 +119,45 @@ export default function SettingsPage() {
     setShowDeactivateDialog(false);
   };
 
+  const handleDelete = async () => {
+    await deleteAccount();
+    setShowDeleteDialog(false);
+  };
+
   const handleSignOut = () => {
     // Sign out of Firebase
     signOut(auth);
+
     alert("You have been signed out.");
+
     navigate("/");
   };
 
   const handleSettingsToggle = async (settingKey, currentValue) => {
     const newValue = !currentValue;
 
-    // Update local UI immediately
-    const setterName = `set${settingKey.charAt(0).toUpperCase() + settingKey.slice(1)}`;
-    if (setters[setterName]) {
-      setters[setterName](newValue);
-    }
+    if (settingKey === "isDarkMode") setIsDarkMode(newValue);
+
+    // Just turns something like username to setUsername and applies the new value
+    setters[`set${settingKey.charAt(0).toUpperCase() + settingKey.slice(1)}`](
+      newValue,
+    );
 
     try {
-      await updateSettings({ [settingKey]: newValue });
+      // Update firebase via context
+      await updateSettings({
+        [settingKey]: newValue,
+      });
+      console.log(`${settingKey} updated to ${newValue}`);
     } catch (error) {
       console.error("Update failed:", error);
-      alert("Failed to save preference.");
-      // Rollback if the update failed
-      if (setters[setterName]) setters[setterName](currentValue);
+      alert("Failed to save preference. Please try again.");
+
+      // Rollback the value to the previous state on failure
+      setters[`set${settingKey.charAt(0).toUpperCase() + settingKey.slice(1)}`](
+        currentValue,
+      );
+      if (settingKey === "isDarkMode") setIsDarkMode(currentValue);
     }
   };
 
@@ -108,7 +180,7 @@ export default function SettingsPage() {
   }, [isDarkMode]);
 
   // Handle saving profile changes
-  if (loading) {
+  if (userLoading) {
     return (
       <div
         style={{
@@ -295,44 +367,78 @@ export default function SettingsPage() {
                     marginBottom: "24px",
                   }}
                 >
-                  <div
-                    style={{
-                      width: "96px",
-                      height: "96px",
-                      backgroundColor: "#4f39f6",
-                      borderRadius: "50%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "white",
-                      fontSize: "32px",
-                      fontWeight: "600",
-                    }}
-                  >
-                    {Array.from(state.firstName)[0] +
-                      Array.from(state.lastName)[0]}
-                  </div>
+                  {/* Profile picture or initials fallback */}
+                  {state.photoURL ? (
+                    <img
+                      src={state.photoURL}
+                      alt="Profile"
+                      style={{
+                        width: "96px",
+                        height: "96px",
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                        border: "3px solid #4f39f6",
+                        flexShrink: 0,
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: "96px",
+                        height: "96px",
+                        backgroundColor: "#4f39f6",
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "white",
+                        fontSize: "32px",
+                        fontWeight: "600",
+                        flexShrink: 0,
+                      }}
+                    >
+                      {(state.firstName?.[0] || "") +
+                        (state.lastName?.[0] || "")}
+                    </div>
+                  )}
+
                   <div>
+                    {/* Hidden file input */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/gif"
+                      style={{ display: "none" }}
+                      onChange={handlePhotoUpload}
+                    />
                     <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
                       style={{
                         padding: "10px 20px",
-                        backgroundColor: "#4f39f6",
+                        backgroundColor: uploading ? "#9585fa" : "#4f39f6",
                         color: "white",
                         border: "none",
                         borderRadius: "8px",
-                        cursor: "pointer",
+                        cursor: uploading ? "not-allowed" : "pointer",
                         marginBottom: "8px",
+                        display: "block",
                       }}
                     >
-                      Upload Photo
+                      {uploading
+                        ? "Uploading…"
+                        : state.photoURL
+                          ? "Change Photo"
+                          : "Upload Photo"}
                     </button>
                     <p
                       style={{
                         fontSize: "14px",
                         color: isDarkMode ? "#90a1b9" : "#45556c",
+                        margin: 0,
                       }}
                     >
-                      JPG, PNG or GIF. Max size 2MB
+                      JPG, PNG or GIF. Max size 500KB
                     </p>
                   </div>
                 </div>
@@ -1015,7 +1121,7 @@ export default function SettingsPage() {
                   <input
                     type="checkbox"
                     aria-label="public profile"
-                    checked={state.isPublic}
+                    checked={state.publicProfile}
                     onChange={() =>
                       handleSettingsToggle("isPublic", state.isPublic)
                     }
@@ -1359,8 +1465,7 @@ export default function SettingsPage() {
                         Cancel
                       </button>
                       <button
-                        // onClick={handleDelete}
-                        onClick={deleteAccount}
+                        onClick={handleDelete}
                         style={{
                           padding: "10px 20px",
                           backgroundColor: "rgb(220, 38, 38)",
