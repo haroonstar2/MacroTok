@@ -1,56 +1,51 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { auth, db } from "../../startFirebase";
+import { auth } from "../../startFirebase";
 
-import {
-  onAuthStateChanged,
-  sendPasswordResetEmail,
-  signOut,
-  deleteUser,
-  reauthenticateWithCredential,
-  reauthenticateWithPopup,
-  EmailAuthProvider,
-  GoogleAuthProvider,
-} from "firebase/auth";
-
-import { doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { sendPasswordResetEmail, signOut } from "firebase/auth";
 
 import useSettings from "./useSettings";
+import { useUser } from "../../UserContext";
 
 export default function SettingsPage() {
-  // Reusable firebase document reference
-  const [userDocRef, setUserDocRef] = useState(null);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  const {
+    user,
+    userData,
+    updateSettings,
+    deleteAccount,
+    loading: userLoading,
+  } = useUser();
+  const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState("profile");
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showDeactivateDialog, setShowDeactivateDialog] = useState(false);
 
-  // For storing the user's profile settings
-  const [userData, setUserData] = useState(null);
-  // For waiting for the user data to load from Firebase
-  const [isLoading, setIsLoading] = useState(true);
-
   // Profile picture
-  const [photoURL, setPhotoURL] = useState(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
 
-  const navigate = useNavigate();
+  // Pass the Firebase data into the useSettings hook
+  const { state, setters } = useSettings(userData?.settings || {});
+
+  useEffect(() => {
+    if (userData?.settings?.photoURL) {
+      setters.setPhotoURL(userData.settings.photoURL);
+    }
+  }, [userData]);
 
   const handleSaveProfile = async () => {
-    if (auth.currentUser) {
-      try {
-        console.log("yo");
-
-        await updateDoc(userDocRef, {
-          settings: { ...state, ...(photoURL ? { photoURL } : {}) },
-        });
-        alert("Profile updated successfully!");
-      } catch (error) {
-        console.error("Error updating profile:", error);
-        alert("Failed to update profile.");
-      }
+    try {
+      await updateSettings({
+        ...state,
+        ...(state.photoURL ? { photoURL: state.photoURL } : {}),
+      });
+      alert("Profile updated successfully!");
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      alert("Failed to update profile.");
     }
   };
 
@@ -70,8 +65,6 @@ export default function SettingsPage() {
 
     setUploading(true);
     try {
-      const user = auth.currentUser;
-
       // Convert image to base64
       const base64 = await new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -81,11 +74,10 @@ export default function SettingsPage() {
       });
 
       // Update UI immediately
-      setPhotoURL(base64);
+      setters.setPhotoURL(base64);
 
       // Save base64 string directly to Firestore
-      const docRef = userDocRef || doc(db, "users", user.uid);
-      await updateDoc(docRef, { "settings.photoURL": base64 });
+      await updateSettings({ photoURL: base64 });
     } catch (err) {
       console.error("Photo upload failed:", err);
       alert("Failed to upload photo. Please try again.");
@@ -96,8 +88,6 @@ export default function SettingsPage() {
   };
 
   const handleSendResetLink = async () => {
-    const user = auth.currentUser;
-
     if (!user || !user.email) {
       alert("Error: User session not found. Please log in again.");
       return;
@@ -130,59 +120,8 @@ export default function SettingsPage() {
   };
 
   const handleDelete = async () => {
-    const user = auth.currentUser;
-
-    // Return early is the user is not logged in
-    if (!user) {
-      console.log("There's no user signed in. Stopping deletion...");
-      return;
-    }
-
-    console.log("Reauthenticating user...");
-    try {
-      console.log("yo");
-
-      // Check how the user is logged in
-      const providerId = user.providerData[0].providerId;
-      console.log("yo2");
-      // If the user is a google user
-      if (providerId === "google.com") {
-        const provider = new GoogleAuthProvider();
-        await reauthenticateWithPopup(user, provider);
-      } else {
-        // If the user is an email user
-        const password = prompt(
-          "Please enter your current password to confirm account deletion:",
-        );
-        // If no password then stop deletion
-        if (!password) return;
-
-        const credential = EmailAuthProvider.credential(user.email, password);
-        await reauthenticateWithCredential(user, credential);
-      }
-
-      // Delete user data from Firestore
-      console.log("Deleting user data...");
-      await deleteDoc(userDocRef);
-
-      // Delete the user account
-      console.log("Deleting user account...");
-      await deleteUser(user);
-
-      alert("Account permanently deleted. We're sad to see you go.");
-      setShowDeleteDialog(false);
-
-      // Go back to landing page
-      navigate("/");
-    } catch (error) {
-      console.error("Deletion failed:", error);
-
-      if (error.code === "auth/wrong-password") {
-        alert("Incorrect password. Deletion cancelled.");
-      } else {
-        alert(`Error: ${error.message}`);
-      }
-    }
+    await deleteAccount();
+    setShowDeleteDialog(false);
   };
 
   const handleSignOut = () => {
@@ -204,63 +143,23 @@ export default function SettingsPage() {
       newValue,
     );
 
-    // Update firebase
-    if (auth.currentUser) {
-      try {
-        // Dot notation to update ONLY the specific sub-field
-        await updateDoc(userDocRef, {
-          [`settings.${settingKey}`]: newValue,
-        });
+    try {
+      // Update firebase via context
+      await updateSettings({
+        [settingKey]: newValue,
+      });
+      console.log(`${settingKey} updated to ${newValue}`);
+    } catch (error) {
+      console.error("Update failed:", error);
+      alert("Failed to save preference. Please try again.");
 
-        console.log(`${settingKey} updated to ${newValue}`);
-      } catch (error) {
-        console.error("Update failed:", error);
-        alert("Failed to save preference. Please try again.");
-
-        // Rollback the value to the previous state
-        setters[
-          `set${settingKey.charAt(0).toUpperCase() + settingKey.slice(1)}`
-        ](currentValue);
-      }
+      // Rollback the value to the previous state on failure
+      setters[`set${settingKey.charAt(0).toUpperCase() + settingKey.slice(1)}`](
+        currentValue,
+      );
+      if (settingKey === "isDarkMode") setIsDarkMode(currentValue);
     }
   };
-
-  // Call the settings from Firebase on component mount
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        try {
-          console.log("User exists. Accessing document...");
-
-          const docRef = doc(db, "users", user.uid);
-          setUserDocRef(docRef);
-
-          const docSnap = await getDoc(docRef);
-
-          if (docSnap.exists()) {
-            console.log("Document exists. Applying it to user data");
-            const data = docSnap.data();
-            setUserData(data.settings);
-            if (data.settings?.photoURL) setPhotoURL(data.settings.photoURL);
-          } else {
-            console.log("No such document!");
-          }
-        } catch (error) {
-          console.error("Error fetching user data:", error);
-        }
-      } else {
-        console.log("No such user!");
-        // Should redirect to login page
-      }
-      // Stop loading whether a user was found
-      setIsLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  // Pass the Firebase data into the useSettings hook
-  const { state, setters } = useSettings(userData);
 
   useEffect(() => {
     // Remove default body margin and set background to match the app
@@ -281,7 +180,7 @@ export default function SettingsPage() {
   }, [isDarkMode]);
 
   // Handle saving profile changes
-  if (isLoading) {
+  if (userLoading) {
     return (
       <div
         style={{
@@ -469,9 +368,9 @@ export default function SettingsPage() {
                   }}
                 >
                   {/* Profile picture or initials fallback */}
-                  {photoURL ? (
+                  {state.photoURL ? (
                     <img
-                      src={photoURL}
+                      src={state.photoURL}
                       alt="Profile"
                       style={{
                         width: "96px",
@@ -528,7 +427,7 @@ export default function SettingsPage() {
                     >
                       {uploading
                         ? "Uploading…"
-                        : photoURL
+                        : state.photoURL
                           ? "Change Photo"
                           : "Upload Photo"}
                     </button>

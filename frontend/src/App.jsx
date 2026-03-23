@@ -22,6 +22,8 @@ import useRecipesStore from "./store/recipeStore";
 import "./app/sidebar/sidebar.css";
 import "./App.css";
 
+import { UserProvider } from "./UserContext";
+
 function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -82,18 +84,20 @@ export default function App() {
   return (
     <div className={isDark ? "app app--dark" : "app app--light"}>
       <Router>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<MacroTokLogin />} />
-          <Route path="/settings" element={<SettingsPage />} />
+        <UserProvider>
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<MacroTokLogin />} />
+            <Route path="/settings" element={<SettingsPage />} />
 
-          <Route element={<AppLayout />}>
-            <Route path="/feed" element={<Feed />} />
-            <Route path="/calendar" element={<PlannerPage />} />
-            <Route path="/liked" element={<LikedPage />} />
-            <Route path="/recipe/:id" element={<RecipePage />} />
-          </Route>
-        </Routes>
+            <Route element={<AppLayout />}>
+              <Route path="/feed" element={<Feed />} />
+              <Route path="/calendar" element={<PlannerPage />} />
+              <Route path="/liked" element={<LikedPage />} />
+              <Route path="/recipe/:id" element={<RecipePage />} />
+            </Route>
+          </Routes>
+        </UserProvider>
       </Router>
     </div>
   );

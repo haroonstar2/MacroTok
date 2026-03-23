@@ -14,7 +14,10 @@ import {
 } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 
+import { useUser } from "../../UserContext";
+
 export default function MacroTokLogin() {
+  const { user, setUser, googleSignIn, emailSignIn, emailSignUp } = useUser();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,35 +28,10 @@ export default function MacroTokLogin() {
   const navigate = useNavigate();
 
   const handleGoogleSignIn = async () => {
+    // await googleSignIn();
+
     try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-
-      const details = await getAdditionalUserInfo(result);
-      const isNewUser = details?.isNewUser;
-
-      if (isNewUser) {
-        // Create a document in the users collection with the user uid as the ID.
-        await setDoc(doc(db, "users", user.uid), {
-          email: user.email,
-          displayName: user.displayName,
-          createdAt: new Date(),
-          lastLogin: new Date(),
-          // Default values for new users
-          settings: {
-            bio: "",
-            communityUpdates: true,
-            darkMode: false,
-            desiredWeight: 165,
-            emailNotifications: true,
-            fitnessGoal: "Lose Weight",
-            isPublic: true,
-            measurements: "imperial",
-            pushNotifications: true,
-          },
-        });
-      }
-
+      const user = await googleSignIn();
       alert(`Success: Welcome, ${user.displayName}!`);
       navigate("/feed");
     } catch (error) {
@@ -64,86 +42,48 @@ export default function MacroTokLogin() {
 
   const handleEmailSignIn = async () => {
     if (!email || !password) {
-      alert("Error: Please enter both email and password.");
+      console.error("Email and password are required.");
+      alert("Email and password are required.");
       return;
     }
 
     try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password,
-      );
-      console.log("Sign in successful:", userCredential.user);
-      alert("Success: You are now signed in.");
+      const user = await emailSignIn();
+      alert(`Success: Welcome, ${user.displayName || user.email}!`);
       navigate("/feed");
     } catch (error) {
-      console.error("Sign in error:", error.code, error.message);
-      if (
-        error.code === "auth/invalid-credential" ||
-        error.code === "auth/wrong-password" ||
-        error.code === "auth/user-not-found"
-      ) {
-        alert("Sign In Failed: Invalid email or password. Please try again.");
-      } else {
-        alert(`Sign In Error: ${error.message}`);
-      }
+      console.error("Email sign in error:", error.code, error.message);
+      alert(`Email Sign In Error ${error.message}`);
     }
   };
 
   const handleSignUp = async () => {
-    console.log(password);
-    console.log(confirmPassword);
-
     if (!email || !password) {
-      alert(
-        "Sign Up Error: Please enter an email and password in the fields first.",
-      );
+      console.error("Email and password are required.");
+      alert("Error: Please enter both email and password.");
       return;
     }
+
     if (password != confirmPassword) {
-      alert("Error: Passwords do not match. Please try again.");
+      console.error("Passwords do not match.");
+      alert("Error: Passwords do not match.");
       return;
     }
+
     if (password.length < 6) {
-      alert("Sign Up Error: Password must be at least 6 characters long.");
+      alert("Error: Password must be at least 6 characters long.");
       return;
     }
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password,
-      );
-
-      const user = userCredential.user;
-
-      // Create a document in the users collection with the user uid as the ID.
-      await setDoc(doc(db, "users", user.uid), {
-        email: user.email,
-        displayName: name,
-        createdAt: new Date(),
-        lastLogin: new Date(),
-        // Default values for new users
-        settings: {
-          bio: "",
-          communityUpdates: true,
-          darkMode: false,
-          desiredWeight: 165,
-          emailNotifications: true,
-          fitnessGoal: "Lose Weight",
-          isPublic: true,
-          measurements: "imperial",
-          pushNotifications: true,
-        },
-      });
-
+      await emailSignUp(email, password, user?.displayName);
       console.log("User document created");
       console.log("Sign up successful:", userCredential.user);
+
       alert(
         "Account Created!: Your account has been successfully created. You are now signed in.",
       );
+
       navigate("/feed");
     } catch (error) {
       console.error("Sign up error:", error.code, error.message);
