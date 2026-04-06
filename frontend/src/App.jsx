@@ -23,6 +23,7 @@ import "./app/sidebar/sidebar.css";
 import "./App.css";
 
 import { UserProvider } from "./UserContext";
+import ProtectedRoute from "./ProtectedRoute";
 
 function AppLayout() {
   const location = useLocation();
@@ -91,9 +92,23 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<MacroTokLogin />} />
-            <Route path="/settings" element={<SettingsPage />} />
 
-            <Route element={<AppLayout />}>
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <SettingsPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              element={
+                <ProtectedRoute>
+                  <AppLayout />
+                </ProtectedRoute>
+              }
+            >
               <Route path="/feed" element={<Feed />} />
               <Route path="/calendar" element={<PlannerPage />} />
               <Route path="/liked" element={<LikedPage />} />

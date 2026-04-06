@@ -9,8 +9,18 @@ import {
   EmailAuthProvider,
   GoogleAuthProvider,
   getAdditionalUserInfo,
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
 } from "firebase/auth";
-import { doc, onSnapshot, updateDoc, deleteDoc } from "firebase/firestore";
+
+import {
+  doc,
+  onSnapshot,
+  updateDoc,
+  deleteDoc,
+  setDoc,
+} from "firebase/firestore";
 
 const UserContext = createContext();
 
@@ -39,7 +49,7 @@ export const UserProvider = ({ children }) => {
       } else {
         setUserData(null);
         setLoading(false);
-        navigate("/login");
+        // navigate("/login");
       }
     });
 
@@ -82,7 +92,7 @@ export const UserProvider = ({ children }) => {
       await deleteUser(user);
 
       alert("Account deleted.");
-      navigate("/");
+      // navigate("/");
     } catch (error) {
       console.error("Deletion failed:", error);
       alert(`Error: ${error.message}`);
@@ -92,7 +102,7 @@ export const UserProvider = ({ children }) => {
   const googleSignIn = async () => {
     try {
       const result = await signInWithPopup(auth, provider);
-      user = result.user;
+      const user = result.user;
 
       const details = await getAdditionalUserInfo(result);
       const isNewUser = details?.isNewUser;
@@ -124,10 +134,10 @@ export const UserProvider = ({ children }) => {
           },
         });
       }
+      return user;
     } catch (error) {
       throw error;
     }
-    return user;
   };
 
   const emailSignIn = async (email, password) => {
@@ -137,11 +147,10 @@ export const UserProvider = ({ children }) => {
         email,
         password,
       );
-      user = userCredential.user;
+      return userCredential.user;
     } catch (error) {
       throw error;
     }
-    return user;
   };
 
   const emailSignUp = async (email, password, displayName) => {

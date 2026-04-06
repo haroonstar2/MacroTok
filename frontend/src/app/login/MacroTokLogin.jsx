@@ -5,14 +5,14 @@ import { useNavigate } from "react-router-dom";
 import { db, auth, provider } from "../../startFirebase";
 
 import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signInWithPopup,
+  // createUserWithEmailAndPassword,
+  // signInWithEmailAndPassword,
+  // signInWithPopup,
   sendPasswordResetEmail,
-  getAdditionalUserInfo,
-  signOut,
+  // getAdditionalUserInfo,
+  // signOut,
 } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+// import { doc, setDoc } from "firebase/firestore";
 
 import { useUser } from "../../UserContext";
 
@@ -48,7 +48,7 @@ export default function MacroTokLogin() {
     }
 
     try {
-      const user = await emailSignIn();
+      const user = await emailSignIn(email, password);
       alert(`Success: Welcome, ${user.displayName || user.email}!`);
       navigate("/feed");
     } catch (error) {
@@ -76,7 +76,7 @@ export default function MacroTokLogin() {
     }
 
     try {
-      await emailSignUp(email, password, user?.displayName);
+      await emailSignUp(email, password, name);
       console.log("User document created");
       console.log("Sign up successful:", userCredential.user);
 
