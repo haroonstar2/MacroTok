@@ -24,11 +24,11 @@ const useSettings = (data) => {
     setBio(data.bio || "");
     setFitnessGoal(data.fitnessGoal || "lose_weight");
     setDesiredWeight(data.desiredWeight || "");
-    setEmailNotifications(data.emailNotifications || true);
-    setPushNotifications(data.pushNotifications || true);
-    setCommunityUpdates(data.communityUpdates || true);
-    setIsPublic(data.isPublic || true);
-    setIsDarkMode(data.darkMode || false);
+    setEmailNotifications(data.emailNotifications ?? true);
+    setPushNotifications(data.pushNotifications ?? true);
+    setCommunityUpdates(data.communityUpdates ?? true);
+    setIsPublic(data.isPublic ?? true);
+    setIsDarkMode(data.isDarkMode ?? false);
     setTimezone(data.timezone || "");
     setPhotoURL(data.photoURL || "");
   }, [data]);

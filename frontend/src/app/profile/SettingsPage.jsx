@@ -8,7 +8,9 @@ import useSettings from "./useSettings";
 import { useUser } from "../../UserContext";
 
 export default function SettingsPage() {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  // const [state.isDarkMode, setstate.isDarkMode] = useState(false);
+  // state.state.isDarkMode
+  // state.isDarkMode
 
   const {
     user,
@@ -29,6 +31,8 @@ export default function SettingsPage() {
 
   // Pass the Firebase data into the useSettings hook
   const { state, setters } = useSettings(userData?.settings || {});
+
+  console.log("yo", state.isDarkMode);
 
   useEffect(() => {
     if (userData?.settings?.photoURL) {
@@ -136,7 +140,11 @@ export default function SettingsPage() {
   const handleSettingsToggle = async (settingKey, currentValue) => {
     const newValue = !currentValue;
 
-    if (settingKey === "isDarkMode") setIsDarkMode(newValue);
+    // if (settingKey === "state.isDarkMode") setstate.isDarkMode(newValue);
+
+    console.log(
+      `set${settingKey.charAt(0).toUpperCase() + settingKey.slice(1)}`,
+    );
 
     // Just turns something like username to setUsername and applies the new value
     setters[`set${settingKey.charAt(0).toUpperCase() + settingKey.slice(1)}`](
@@ -157,17 +165,19 @@ export default function SettingsPage() {
       setters[`set${settingKey.charAt(0).toUpperCase() + settingKey.slice(1)}`](
         currentValue,
       );
-      if (settingKey === "isDarkMode") setIsDarkMode(currentValue);
+      if (settingKey === "state.isDarkMode") setstate.isDarkMode(currentValue);
     }
   };
 
   useEffect(() => {
     // Remove default body margin and set background to match the app
     document.body.style.margin = "0";
-    document.body.style.backgroundColor = isDarkMode ? "#0f172b" : "#f8fafc";
+    document.body.style.backgroundColor = state.isDarkMode
+      ? "#0f172b"
+      : "#f8fafc";
 
     // Optional: make sure the html element also matches
-    document.documentElement.style.backgroundColor = isDarkMode
+    document.documentElement.style.backgroundColor = state.isDarkMode
       ? "#0f172b"
       : "#f8fafc";
 
@@ -177,7 +187,7 @@ export default function SettingsPage() {
       document.body.style.backgroundColor = "";
       document.documentElement.style.backgroundColor = "";
     };
-  }, [isDarkMode]);
+  }, [state.isDarkMode]);
 
   // Handle saving profile changes
   if (userLoading) {
@@ -198,11 +208,11 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className={isDarkMode ? "dark" : ""}>
+    <div className={state.isDarkMode ? "dark" : ""}>
       <div
         style={{
           minHeight: "100vh",
-          backgroundColor: isDarkMode ? "#0f172b" : "#f8fafc",
+          backgroundColor: state.isDarkMode ? "#0f172b" : "#f8fafc",
         }}
       >
         {/* Header */}
@@ -270,7 +280,7 @@ export default function SettingsPage() {
               fontSize: "32px",
               fontWeight: "600",
               marginBottom: "8px",
-              color: isDarkMode ? "white" : "#0f172b",
+              color: state.isDarkMode ? "white" : "#0f172b",
             }}
           >
             Settings
@@ -278,7 +288,7 @@ export default function SettingsPage() {
           <p
             style={{
               fontSize: "16px",
-              color: isDarkMode ? "#90a1b9" : "#45556c",
+              color: state.isDarkMode ? "#90a1b9" : "#45556c",
               marginBottom: "32px",
             }}
           >
@@ -290,7 +300,7 @@ export default function SettingsPage() {
             style={{
               display: "flex",
               gap: "16px",
-              borderBottom: `1px solid ${isDarkMode ? "#45556c" : "#e2e8f0"}`,
+              borderBottom: `1px solid ${state.isDarkMode ? "#45556c" : "#e2e8f0"}`,
               marginBottom: "32px",
             }}
           >
@@ -309,10 +319,10 @@ export default function SettingsPage() {
                         : "2px solid transparent",
                     color:
                       activeTab === tab
-                        ? isDarkMode
+                        ? state.isDarkMode
                           ? "white"
                           : "#0f172b"
-                        : isDarkMode
+                        : state.isDarkMode
                           ? "#90a1b9"
                           : "#45556c",
                     cursor: "pointer",
@@ -333,7 +343,7 @@ export default function SettingsPage() {
               <h2
                 style={{
                   fontSize: "24px",
-                  color: isDarkMode ? "white" : "#0f172b",
+                  color: state.isDarkMode ? "white" : "#0f172b",
                   marginBottom: "8px",
                 }}
               >
@@ -342,7 +352,7 @@ export default function SettingsPage() {
               <p
                 style={{
                   fontSize: "16px",
-                  color: isDarkMode ? "#90a1b9" : "#45556c",
+                  color: state.isDarkMode ? "#90a1b9" : "#45556c",
                   marginBottom: "24px",
                 }}
               >
@@ -351,10 +361,10 @@ export default function SettingsPage() {
 
               <div
                 style={{
-                  backgroundColor: isDarkMode ? "#1e293b" : "white",
+                  backgroundColor: state.isDarkMode ? "#1e293b" : "white",
                   padding: "24px",
                   borderRadius: "12px",
-                  border: `1px solid ${isDarkMode ? "#45556c" : "#cad5e2"}`,
+                  border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
                   boxShadow: "0px 10px 15px -3px rgba(0,0,0,0.1)",
                 }}
               >
@@ -434,7 +444,7 @@ export default function SettingsPage() {
                     <p
                       style={{
                         fontSize: "14px",
-                        color: isDarkMode ? "#90a1b9" : "#45556c",
+                        color: state.isDarkMode ? "#90a1b9" : "#45556c",
                         margin: 0,
                       }}
                     >
@@ -446,7 +456,7 @@ export default function SettingsPage() {
                 <hr
                   style={{
                     border: "none",
-                    borderTop: `1px solid ${isDarkMode ? "#45556c" : "#e2e8f0"}`,
+                    borderTop: `1px solid ${state.isDarkMode ? "#45556c" : "#e2e8f0"}`,
                     margin: "24px 0",
                   }}
                 />
@@ -465,7 +475,7 @@ export default function SettingsPage() {
                       style={{
                         display: "block",
                         marginBottom: "8px",
-                        color: isDarkMode ? "white" : "#0f172b",
+                        color: state.isDarkMode ? "white" : "#0f172b",
                       }}
                     >
                       First Name
@@ -477,10 +487,10 @@ export default function SettingsPage() {
                       style={{
                         width: "100%",
                         padding: "10px 2px",
-                        border: `1px solid ${isDarkMode ? "#45556c" : "#cad5e2"}`,
+                        border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
                         borderRadius: "8px",
-                        backgroundColor: isDarkMode ? "#0f172b" : "white",
-                        color: isDarkMode ? "white" : "#0f172b",
+                        backgroundColor: state.isDarkMode ? "#0f172b" : "white",
+                        color: state.isDarkMode ? "white" : "#0f172b",
                       }}
                     />
                   </div>
@@ -489,7 +499,7 @@ export default function SettingsPage() {
                       style={{
                         display: "block",
                         marginBottom: "8px",
-                        color: isDarkMode ? "white" : "#0f172b",
+                        color: state.isDarkMode ? "white" : "#0f172b",
                       }}
                     >
                       Last Name
@@ -501,10 +511,10 @@ export default function SettingsPage() {
                       style={{
                         width: "100%",
                         padding: "10px 2px",
-                        border: `1px solid ${isDarkMode ? "#45556c" : "#cad5e2"}`,
+                        border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
                         borderRadius: "8px",
-                        backgroundColor: isDarkMode ? "#0f172b" : "white",
-                        color: isDarkMode ? "white" : "#0f172b",
+                        backgroundColor: state.isDarkMode ? "#0f172b" : "white",
+                        color: state.isDarkMode ? "white" : "#0f172b",
                       }}
                     />
                   </div>
@@ -516,7 +526,7 @@ export default function SettingsPage() {
                     style={{
                       display: "block",
                       marginBottom: "8px",
-                      color: isDarkMode ? "white" : "#0f172b",
+                      color: state.isDarkMode ? "white" : "#0f172b",
                     }}
                   >
                     Username
@@ -529,10 +539,10 @@ export default function SettingsPage() {
                     style={{
                       width: "100%",
                       padding: "10px 1px",
-                      border: `1px solid ${isDarkMode ? "#45556c" : "#cad5e2"}`,
+                      border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
                       borderRadius: "8px",
-                      backgroundColor: isDarkMode ? "#0f172b" : "white",
-                      color: isDarkMode ? "white" : "#0f172b",
+                      backgroundColor: state.isDarkMode ? "#0f172b" : "white",
+                      color: state.isDarkMode ? "white" : "#0f172b",
                     }}
                   />
                 </div>
@@ -543,7 +553,7 @@ export default function SettingsPage() {
                     style={{
                       display: "block",
                       marginBottom: "8px",
-                      color: isDarkMode ? "white" : "#0f172b",
+                      color: state.isDarkMode ? "white" : "#0f172b",
                     }}
                   >
                     Bio
@@ -556,10 +566,10 @@ export default function SettingsPage() {
                     style={{
                       width: "100%",
                       padding: "10px 1px",
-                      border: `1px solid ${isDarkMode ? "#45556c" : "#cad5e2"}`,
+                      border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
                       borderRadius: "8px",
-                      backgroundColor: isDarkMode ? "#0f172b" : "white",
-                      color: isDarkMode ? "white" : "#0f172b",
+                      backgroundColor: state.isDarkMode ? "#0f172b" : "white",
+                      color: state.isDarkMode ? "white" : "#0f172b",
                       fontFamily: "inherit",
                     }}
                   />
@@ -579,7 +589,7 @@ export default function SettingsPage() {
                       style={{
                         display: "block",
                         marginBottom: "8px",
-                        color: isDarkMode ? "white" : "#0f172b",
+                        color: state.isDarkMode ? "white" : "#0f172b",
                       }}
                     >
                       Fitness Goal
@@ -590,10 +600,10 @@ export default function SettingsPage() {
                       style={{
                         width: "100%",
                         padding: "10px 12px",
-                        border: `1px solid ${isDarkMode ? "#45556c" : "#cad5e2"}`,
+                        border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
                         borderRadius: "8px",
-                        backgroundColor: isDarkMode ? "#0f172b" : "white",
-                        color: isDarkMode ? "white" : "#0f172b",
+                        backgroundColor: state.isDarkMode ? "#0f172b" : "white",
+                        color: state.isDarkMode ? "white" : "#0f172b",
                       }}
                     >
                       <option value="lose_weight">Lose Weight</option>
@@ -606,7 +616,7 @@ export default function SettingsPage() {
                       style={{
                         display: "block",
                         marginBottom: "8px",
-                        color: isDarkMode ? "white" : "#0f172b",
+                        color: state.isDarkMode ? "white" : "#0f172b",
                       }}
                     >
                       Desired Weight (lbs)
@@ -619,10 +629,10 @@ export default function SettingsPage() {
                       style={{
                         width: "100%",
                         padding: "10px 1px",
-                        border: `1px solid ${isDarkMode ? "#45556c" : "#cad5e2"}`,
+                        border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
                         borderRadius: "8px",
-                        backgroundColor: isDarkMode ? "#0f172b" : "white",
-                        color: isDarkMode ? "white" : "#0f172b",
+                        backgroundColor: state.isDarkMode ? "#0f172b" : "white",
+                        color: state.isDarkMode ? "white" : "#0f172b",
                       }}
                     />
                   </div>
@@ -633,7 +643,7 @@ export default function SettingsPage() {
                       style={{
                         display: "block",
                         marginBottom: "12px",
-                        color: isDarkMode ? "white" : "#0f172b",
+                        color: state.isDarkMode ? "white" : "#0f172b",
                       }}
                     >
                       Time Zone
@@ -645,10 +655,10 @@ export default function SettingsPage() {
                       style={{
                         width: "100%",
                         padding: "10px 12px",
-                        border: `1px solid ${isDarkMode ? "#45556c" : "#cad5e2"}`,
+                        border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
                         borderRadius: "8px",
-                        backgroundColor: isDarkMode ? "#0f172b" : "white",
-                        color: isDarkMode ? "white" : "#0f172b",
+                        backgroundColor: state.isDarkMode ? "#0f172b" : "white",
+                        color: state.isDarkMode ? "white" : "#0f172b",
                       }}
                     >
                       <option>Pacific Time (PT)</option>
@@ -663,7 +673,7 @@ export default function SettingsPage() {
                   onClick={handleSaveProfile}
                   style={{
                     padding: "10px 20px",
-                    backgroundColor: isDarkMode ? "#4f39f6" : "#4f39f6",
+                    backgroundColor: state.isDarkMode ? "#4f39f6" : "#4f39f6",
                     color: "white",
                     border: "none",
                     borderRadius: "8px",
@@ -682,7 +692,7 @@ export default function SettingsPage() {
               <h2
                 style={{
                   fontSize: "24px",
-                  color: isDarkMode ? "white" : "#182b0fff",
+                  color: state.isDarkMode ? "white" : "#182b0fff",
                   marginBottom: "8px",
                 }}
               >
@@ -691,7 +701,7 @@ export default function SettingsPage() {
               <p
                 style={{
                   fontSize: "16px",
-                  color: isDarkMode ? "#90a1b9" : "#45556c",
+                  color: state.isDarkMode ? "#90a1b9" : "#45556c",
                   marginBottom: "24px",
                 }}
               >
@@ -700,10 +710,10 @@ export default function SettingsPage() {
 
               <div
                 style={{
-                  backgroundColor: isDarkMode ? "#1e293b" : "white",
+                  backgroundColor: state.isDarkMode ? "#1e293b" : "white",
                   padding: "24px",
                   borderRadius: "12px",
-                  border: `1px solid ${isDarkMode ? "#45556c" : "#cad5e2"}`,
+                  border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
                   boxShadow: "0px 10px 15px -3px rgba(0,0,0,0.1)",
                   marginBottom: "24px",
                 }}
@@ -711,7 +721,7 @@ export default function SettingsPage() {
                 <h3
                   style={{
                     fontSize: "18px",
-                    color: isDarkMode ? "white" : "#0f172b",
+                    color: state.isDarkMode ? "white" : "#0f172b",
                     marginBottom: "4px",
                   }}
                 >
@@ -719,7 +729,7 @@ export default function SettingsPage() {
                 </h3>
                 {/* <p style={{ 
                   fontSize: '14px', 
-                  color: isDarkMode ? '#90a1b9' : '#45556c',
+                  color: state.isDarkMode ? '#90a1b9' : '#45556c',
                   marginBottom: '16px'
                 }}>
                   Please provide your email to send a password reset link. The link will expire in 20 minutes.
@@ -729,7 +739,7 @@ export default function SettingsPage() {
                   <label style={{ 
                     display: 'block', 
                     marginBottom: '8px',
-                    color: isDarkMode ? 'white' : '#0f172b'
+                    color: state.isDarkMode ? 'white' : '#0f172b'
                   }}>
                     Email Address
                   </label>
@@ -740,10 +750,10 @@ export default function SettingsPage() {
                     style={{
                       width: '100%',
                       padding: '10px 0px',
-                      border: `1px solid ${isDarkMode ? '#45556c' : '#cad5e2'}`,
+                      border: `1px solid ${state.isDarkMode ? '#45556c' : '#cad5e2'}`,
                       borderRadius: '8px',
-                      backgroundColor: isDarkMode ? '#0f172b' : 'white',
-                      color: isDarkMode ? 'white' : '#0f172b'
+                      backgroundColor: state.isDarkMode ? '#0f172b' : 'white',
+                      color: state.isDarkMode ? 'white' : '#0f172b'
                     }}
                   />
                 </div> */}
@@ -768,17 +778,17 @@ export default function SettingsPage() {
 
               <div
                 style={{
-                  backgroundColor: isDarkMode ? "#1e293b" : "white",
+                  backgroundColor: state.isDarkMode ? "#1e293b" : "white",
                   padding: "24px",
                   borderRadius: "12px",
-                  border: `1px solid ${isDarkMode ? "#45556c" : "#cad5e2"}`,
+                  border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
                   boxShadow: "0px 10px 15px -3px rgba(0,0,0,0.1)",
                 }}
               >
                 <h3
                   style={{
                     fontSize: "18px",
-                    color: isDarkMode ? "white" : "#0f172b",
+                    color: state.isDarkMode ? "white" : "#0f172b",
                     marginBottom: "4px",
                   }}
                 >
@@ -787,7 +797,7 @@ export default function SettingsPage() {
                 <p
                   style={{
                     fontSize: "14px",
-                    color: isDarkMode ? "#90a1b9" : "#45556c",
+                    color: state.isDarkMode ? "#90a1b9" : "#45556c",
                     marginBottom: "16px",
                   }}
                 >
@@ -797,8 +807,8 @@ export default function SettingsPage() {
                   style={{
                     padding: "10px 20px",
                     backgroundColor: "transparent",
-                    color: isDarkMode ? "white" : "#0f172b",
-                    border: `1px solid ${isDarkMode ? "#45556c" : "#cad5e2"}`,
+                    color: state.isDarkMode ? "white" : "#0f172b",
+                    border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
                     borderRadius: "8px",
                     cursor: "pointer",
                   }}
@@ -815,7 +825,7 @@ export default function SettingsPage() {
               <h2
                 style={{
                   fontSize: "24px",
-                  color: isDarkMode ? "white" : "#0f172b",
+                  color: state.isDarkMode ? "white" : "#0f172b",
                   marginBottom: "8px",
                 }}
               >
@@ -824,7 +834,7 @@ export default function SettingsPage() {
               <p
                 style={{
                   fontSize: "16px",
-                  color: isDarkMode ? "#90a1b9" : "#45556c",
+                  color: state.isDarkMode ? "#90a1b9" : "#45556c",
                   marginBottom: "24px",
                 }}
               >
@@ -833,10 +843,10 @@ export default function SettingsPage() {
 
               <div
                 style={{
-                  backgroundColor: isDarkMode ? "#1e293b" : "white",
+                  backgroundColor: state.isDarkMode ? "#1e293b" : "white",
                   padding: "24px",
                   borderRadius: "12px",
-                  border: `1px solid ${isDarkMode ? "#45556c" : "#cad5e2"}`,
+                  border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
                   boxShadow: "0px 10px 15px -3px rgba(0,0,0,0.1)",
                 }}
               >
@@ -852,7 +862,7 @@ export default function SettingsPage() {
                   <div>
                     <div
                       style={{
-                        color: isDarkMode ? "white" : "#0f172b",
+                        color: state.isDarkMode ? "white" : "#0f172b",
                         marginBottom: "4px",
                       }}
                     >
@@ -861,7 +871,7 @@ export default function SettingsPage() {
                     <div
                       style={{
                         fontSize: "14px",
-                        color: isDarkMode ? "#90a1b9" : "#45556c",
+                        color: state.isDarkMode ? "#90a1b9" : "#45556c",
                       }}
                     >
                       Switch between light and dark theme
@@ -878,9 +888,9 @@ export default function SettingsPage() {
                     <input
                       type="checkbox"
                       aria-label="Dark Mode"
-                      checked={isDarkMode}
+                      checked={state.isDarkMode}
                       onChange={() =>
-                        handleSettingsToggle("isDarkMode", isDarkMode)
+                        handleSettingsToggle("isDarkMode", state.isDarkMode)
                       }
                       style={{ opacity: 0, width: 0, height: 0 }}
                     />
@@ -892,7 +902,7 @@ export default function SettingsPage() {
                         left: 0,
                         right: 0,
                         bottom: 0,
-                        backgroundColor: isDarkMode ? "#4f39f6" : "#ccc",
+                        backgroundColor: state.isDarkMode ? "#4f39f6" : "#ccc",
                         transition: "0.4s",
                         borderRadius: "24px",
                       }}
@@ -903,7 +913,7 @@ export default function SettingsPage() {
                           content: "",
                           height: "18px",
                           width: "18px",
-                          left: isDarkMode ? "27px" : "3px",
+                          left: state.isDarkMode ? "27px" : "3px",
                           bottom: "3px",
                           backgroundColor: "white",
                           transition: "0.4s",
@@ -917,7 +927,7 @@ export default function SettingsPage() {
                 <hr
                   style={{
                     border: "none",
-                    borderTop: `1px solid ${isDarkMode ? "#45556c" : "#e2e8f0"}`,
+                    borderTop: `1px solid ${state.isDarkMode ? "#45556c" : "#e2e8f0"}`,
                     margin: "24px 0",
                   }}
                 />
@@ -934,7 +944,7 @@ export default function SettingsPage() {
                   <div>
                     <div
                       style={{
-                        color: isDarkMode ? "white" : "#0f172b",
+                        color: state.isDarkMode ? "white" : "#0f172b",
                         marginBottom: "4px",
                       }}
                     >
@@ -943,7 +953,7 @@ export default function SettingsPage() {
                     <div
                       style={{
                         fontSize: "14px",
-                        color: isDarkMode ? "#90a1b9" : "#45556c",
+                        color: state.isDarkMode ? "#90a1b9" : "#45556c",
                       }}
                     >
                       Receive emails about your meal plans and recipes
@@ -965,7 +975,7 @@ export default function SettingsPage() {
                 <hr
                   style={{
                     border: "none",
-                    borderTop: `1px solid ${isDarkMode ? "#45556c" : "#e2e8f0"}`,
+                    borderTop: `1px solid ${state.isDarkMode ? "#45556c" : "#e2e8f0"}`,
                     margin: "24px 0",
                   }}
                 />
@@ -982,7 +992,7 @@ export default function SettingsPage() {
                   <div>
                     <div
                       style={{
-                        color: isDarkMode ? "white" : "#0f172b",
+                        color: state.isDarkMode ? "white" : "#0f172b",
                         marginBottom: "4px",
                       }}
                     >
@@ -991,7 +1001,7 @@ export default function SettingsPage() {
                     <div
                       style={{
                         fontSize: "14px",
-                        color: isDarkMode ? "#90a1b9" : "#45556c",
+                        color: state.isDarkMode ? "#90a1b9" : "#45556c",
                       }}
                     >
                       Get reminders for meal times and weekly planning
@@ -1013,7 +1023,7 @@ export default function SettingsPage() {
                 <hr
                   style={{
                     border: "none",
-                    borderTop: `1px solid ${isDarkMode ? "#45556c" : "#e2e8f0"}`,
+                    borderTop: `1px solid ${state.isDarkMode ? "#45556c" : "#e2e8f0"}`,
                     margin: "24px 0",
                   }}
                 />
@@ -1030,7 +1040,7 @@ export default function SettingsPage() {
                   <div>
                     <div
                       style={{
-                        color: isDarkMode ? "white" : "#0f172b",
+                        color: state.isDarkMode ? "white" : "#0f172b",
                         marginBottom: "4px",
                       }}
                     >
@@ -1039,7 +1049,7 @@ export default function SettingsPage() {
                     <div
                       style={{
                         fontSize: "14px",
-                        color: isDarkMode ? "#90a1b9" : "#45556c",
+                        color: state.isDarkMode ? "#90a1b9" : "#45556c",
                       }}
                     >
                       Stay informed about community recipes and content
@@ -1067,7 +1077,7 @@ export default function SettingsPage() {
               <h2
                 style={{
                   fontSize: "24px",
-                  color: isDarkMode ? "white" : "#0f172b",
+                  color: state.isDarkMode ? "white" : "#0f172b",
                   marginBottom: "8px",
                 }}
               >
@@ -1076,7 +1086,7 @@ export default function SettingsPage() {
               <p
                 style={{
                   fontSize: "16px",
-                  color: isDarkMode ? "#90a1b9" : "#45556c",
+                  color: state.isDarkMode ? "#90a1b9" : "#45556c",
                   marginBottom: "24px",
                 }}
               >
@@ -1085,10 +1095,10 @@ export default function SettingsPage() {
 
               <div
                 style={{
-                  backgroundColor: isDarkMode ? "#1e293b" : "white",
+                  backgroundColor: state.isDarkMode ? "#1e293b" : "white",
                   padding: "24px",
                   borderRadius: "12px",
-                  border: `1px solid ${isDarkMode ? "#45556c" : "#cad5e2"}`,
+                  border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
                   boxShadow: "0px 10px 15px -3px rgba(0,0,0,0.1)",
                   marginBottom: "24px",
                 }}
@@ -1103,7 +1113,7 @@ export default function SettingsPage() {
                   <div>
                     <div
                       style={{
-                        color: isDarkMode ? "white" : "#0f172b",
+                        color: state.isDarkMode ? "white" : "#0f172b",
                         marginBottom: "4px",
                       }}
                     >
@@ -1112,7 +1122,7 @@ export default function SettingsPage() {
                     <div
                       style={{
                         fontSize: "14px",
-                        color: isDarkMode ? "#90a1b9" : "#45556c",
+                        color: state.isDarkMode ? "#90a1b9" : "#45556c",
                       }}
                     >
                       Make your profile visible to all users
@@ -1121,7 +1131,7 @@ export default function SettingsPage() {
                   <input
                     type="checkbox"
                     aria-label="public profile"
-                    checked={state.publicProfile}
+                    checked={state.isPublic}
                     onChange={() =>
                       handleSettingsToggle("isPublic", state.isPublic)
                     }
@@ -1132,17 +1142,17 @@ export default function SettingsPage() {
 
               <div
                 style={{
-                  backgroundColor: isDarkMode ? "#1e293b" : "white",
+                  backgroundColor: state.isDarkMode ? "#1e293b" : "white",
                   padding: "24px",
                   borderRadius: "12px",
-                  border: `1px solid ${isDarkMode ? "#45556c" : "#cad5e2"}`,
+                  border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
                   boxShadow: "0px 10px 15px -3px rgba(0,0,0,0.1)",
                 }}
               >
                 <h3
                   style={{
                     fontSize: "18px",
-                    color: isDarkMode ? "white" : "#0f172b",
+                    color: state.isDarkMode ? "white" : "#0f172b",
                     marginBottom: "4px",
                   }}
                 >
@@ -1151,7 +1161,7 @@ export default function SettingsPage() {
                 <p
                   style={{
                     fontSize: "14px",
-                    color: isDarkMode ? "#90a1b9" : "#45556c",
+                    color: state.isDarkMode ? "#90a1b9" : "#45556c",
                     marginBottom: "16px",
                   }}
                 >
@@ -1162,8 +1172,8 @@ export default function SettingsPage() {
                     style={{
                       padding: "10px 20px",
                       backgroundColor: "transparent",
-                      color: isDarkMode ? "white" : "#0f172b",
-                      border: `1px solid ${isDarkMode ? "#45556c" : "#cad5e2"}`,
+                      color: state.isDarkMode ? "white" : "#0f172b",
+                      border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
                       borderRadius: "8px",
                       cursor: "pointer",
                     }}
@@ -1174,8 +1184,8 @@ export default function SettingsPage() {
                     style={{
                       padding: "10px 20px",
                       backgroundColor: "transparent",
-                      color: isDarkMode ? "white" : "#0f172b",
-                      border: `1px solid ${isDarkMode ? "#45556c" : "#cad5e2"}`,
+                      color: state.isDarkMode ? "white" : "#0f172b",
+                      border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
                       borderRadius: "8px",
                       cursor: "pointer",
                     }}
@@ -1193,7 +1203,7 @@ export default function SettingsPage() {
               <h2
                 style={{
                   fontSize: "24px",
-                  color: isDarkMode ? "white" : "#0f172b",
+                  color: state.isDarkMode ? "white" : "#0f172b",
                   marginBottom: "8px",
                 }}
               >
@@ -1202,7 +1212,7 @@ export default function SettingsPage() {
               <p
                 style={{
                   fontSize: "16px",
-                  color: isDarkMode ? "#90a1b9" : "#45556c",
+                  color: state.isDarkMode ? "#90a1b9" : "#45556c",
                   marginBottom: "24px",
                 }}
               >
@@ -1212,10 +1222,10 @@ export default function SettingsPage() {
               {/* Deactivate Account */}
               <div
                 style={{
-                  backgroundColor: isDarkMode ? "#1e293b" : "white",
+                  backgroundColor: state.isDarkMode ? "#1e293b" : "white",
                   padding: "24px",
                   borderRadius: "12px",
-                  border: `1px solid ${isDarkMode ? "rgba(251, 191, 36, 0.5)" : "rgb(254, 240, 199)"}`,
+                  border: `1px solid ${state.isDarkMode ? "rgba(251, 191, 36, 0.5)" : "rgb(254, 240, 199)"}`,
                   boxShadow: "0px 10px 15px -3px rgba(251,191,36,0.1)",
                   marginBottom: "24px",
                 }}
@@ -1223,7 +1233,9 @@ export default function SettingsPage() {
                 <h3
                   style={{
                     fontSize: "18px",
-                    color: isDarkMode ? "rgb(251, 191, 36)" : "rgb(180, 83, 9)",
+                    color: state.isDarkMode
+                      ? "rgb(251, 191, 36)"
+                      : "rgb(180, 83, 9)",
                     marginBottom: "4px",
                   }}
                 >
@@ -1232,7 +1244,7 @@ export default function SettingsPage() {
                 <p
                   style={{
                     fontSize: "14px",
-                    color: isDarkMode ? "#90a1b9" : "#45556c",
+                    color: state.isDarkMode ? "#90a1b9" : "#45556c",
                     marginBottom: "16px",
                   }}
                 >
@@ -1244,8 +1256,10 @@ export default function SettingsPage() {
                   style={{
                     padding: "10px 20px",
                     backgroundColor: "transparent",
-                    color: isDarkMode ? "rgb(251, 191, 36)" : "rgb(180, 83, 9)",
-                    border: `1px solid ${isDarkMode ? "rgb(251, 191, 36)" : "rgb(217, 119, 6)"}`,
+                    color: state.isDarkMode
+                      ? "rgb(251, 191, 36)"
+                      : "rgb(180, 83, 9)",
+                    border: `1px solid ${state.isDarkMode ? "rgb(251, 191, 36)" : "rgb(217, 119, 6)"}`,
                     borderRadius: "8px",
                     cursor: "pointer",
                   }}
@@ -1257,17 +1271,17 @@ export default function SettingsPage() {
               {/* Delete Account */}
               <div
                 style={{
-                  backgroundColor: isDarkMode ? "#1e293b" : "white",
+                  backgroundColor: state.isDarkMode ? "#1e293b" : "white",
                   padding: "24px",
                   borderRadius: "12px",
-                  border: `1px solid ${isDarkMode ? "rgba(239, 68, 68, 0.5)" : "rgb(254, 226, 226)"}`,
+                  border: `1px solid ${state.isDarkMode ? "rgba(239, 68, 68, 0.5)" : "rgb(254, 226, 226)"}`,
                   boxShadow: "0px 10px 15px -3px rgba(239,68,68,0.1)",
                 }}
               >
                 <h3
                   style={{
                     fontSize: "18px",
-                    color: isDarkMode
+                    color: state.isDarkMode
                       ? "rgb(248, 113, 113)"
                       : "rgb(220, 38, 38)",
                     marginBottom: "4px",
@@ -1278,7 +1292,7 @@ export default function SettingsPage() {
                 <p
                   style={{
                     fontSize: "14px",
-                    color: isDarkMode ? "#90a1b9" : "#45556c",
+                    color: state.isDarkMode ? "#90a1b9" : "#45556c",
                     marginBottom: "16px",
                   }}
                 >
@@ -1291,10 +1305,10 @@ export default function SettingsPage() {
                   style={{
                     padding: "10px 20px",
                     backgroundColor: "transparent",
-                    color: isDarkMode
+                    color: state.isDarkMode
                       ? "rgb(248, 113, 113)"
                       : "rgb(220, 38, 38)",
-                    border: `1px solid ${isDarkMode ? "rgb(239, 68, 68)" : "rgb(220, 38, 38)"}`,
+                    border: `1px solid ${state.isDarkMode ? "rgb(239, 68, 68)" : "rgb(220, 38, 38)"}`,
                     borderRadius: "8px",
                     cursor: "pointer",
                   }}
@@ -1321,17 +1335,17 @@ export default function SettingsPage() {
                 >
                   <div
                     style={{
-                      backgroundColor: isDarkMode ? "#1e293b" : "white",
+                      backgroundColor: state.isDarkMode ? "#1e293b" : "white",
                       padding: "32px",
                       borderRadius: "12px",
                       maxWidth: "500px",
-                      border: `1px solid ${isDarkMode ? "#45556c" : "#cad5e2"}`,
+                      border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
                     }}
                   >
                     <h3
                       style={{
                         fontSize: "20px",
-                        color: isDarkMode ? "white" : "#0f172b",
+                        color: state.isDarkMode ? "white" : "#0f172b",
                         marginBottom: "12px",
                       }}
                     >
@@ -1340,7 +1354,7 @@ export default function SettingsPage() {
                     <p
                       style={{
                         fontSize: "14px",
-                        color: isDarkMode ? "#90a1b9" : "#45556c",
+                        color: state.isDarkMode ? "#90a1b9" : "#45556c",
                         marginBottom: "24px",
                       }}
                     >
@@ -1360,8 +1374,8 @@ export default function SettingsPage() {
                         style={{
                           padding: "10px 20px",
                           backgroundColor: "transparent",
-                          color: isDarkMode ? "white" : "#0f172b",
-                          border: `1px solid ${isDarkMode ? "#45556c" : "#cad5e2"}`,
+                          color: state.isDarkMode ? "white" : "#0f172b",
+                          border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
                           borderRadius: "8px",
                           cursor: "pointer",
                         }}
@@ -1404,17 +1418,17 @@ export default function SettingsPage() {
                 >
                   <div
                     style={{
-                      backgroundColor: isDarkMode ? "#1e293b" : "white",
+                      backgroundColor: state.isDarkMode ? "#1e293b" : "white",
                       padding: "32px",
                       borderRadius: "12px",
                       maxWidth: "500px",
-                      border: `1px solid ${isDarkMode ? "#45556c" : "#cad5e2"}`,
+                      border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
                     }}
                   >
                     <h3
                       style={{
                         fontSize: "20px",
-                        color: isDarkMode ? "white" : "#0f172b",
+                        color: state.isDarkMode ? "white" : "#0f172b",
                         marginBottom: "12px",
                       }}
                     >
@@ -1423,7 +1437,7 @@ export default function SettingsPage() {
                     <p
                       style={{
                         fontSize: "14px",
-                        color: isDarkMode ? "#90a1b9" : "#45556c",
+                        color: state.isDarkMode ? "#90a1b9" : "#45556c",
                         marginBottom: "12px",
                       }}
                     >
@@ -1434,7 +1448,7 @@ export default function SettingsPage() {
                     <ul
                       style={{
                         fontSize: "14px",
-                        color: isDarkMode ? "#90a1b9" : "#45556c",
+                        color: state.isDarkMode ? "#90a1b9" : "#45556c",
                         marginBottom: "24px",
                         paddingLeft: "20px",
                       }}
@@ -1456,8 +1470,8 @@ export default function SettingsPage() {
                         style={{
                           padding: "10px 20px",
                           backgroundColor: "transparent",
-                          color: isDarkMode ? "white" : "#0f172b",
-                          border: `1px solid ${isDarkMode ? "#45556c" : "#cad5e2"}`,
+                          color: state.isDarkMode ? "white" : "#0f172b",
+                          border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
                           borderRadius: "8px",
                           cursor: "pointer",
                         }}

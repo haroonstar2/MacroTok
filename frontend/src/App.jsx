@@ -7,10 +7,8 @@ import {
   useParams,
   Outlet,
   useLocation,
-  useLocation,
 } from "react-router-dom";
 
-import MacroTokLogin from "./app/login/MacroTokLogin";
 import MacroTokLogin from "./app/login/MacroTokLogin";
 import Calendar from "./app/calendar/Calendar";
 import Goal from "./app/calendar/Goal";
