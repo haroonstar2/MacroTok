@@ -54,8 +54,6 @@ function AppLayout() {
   return (
     <div className="layout">
       <Sidebar active={active} onNav={handleSidebarNav} />
-
-      <Sidebar active={active} onNav={handleSidebarNav} />
       <div className="layout-main">
         <Outlet />
       </div>
