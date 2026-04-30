@@ -13,6 +13,7 @@ import MacroTokLogin from "./app/login/MacroTokLogin";
 import Calendar from "./app/calendar/Calendar";
 import Goal from "./app/calendar/Goal";
 import Landing from "./app/landing/Landing";
+import NewLanding from "./app/landing/NewLanding";
 import Feed from "./app/feed/Feed";
 import Sidebar from "./app/sidebar/Sidebar";
 import RecipeView from "./app/recipes/RecipeView";
@@ -90,7 +91,8 @@ export default function App() {
       <Router>
         <UserProvider>
           <Routes>
-            <Route path="/" element={<Landing />} />
+            {/* <Route path="/" element={<Landing />} /> */}
+            <Route path="/" element={<NewLanding />} />
             <Route path="/login" element={<MacroTokLogin />} />
 
             <Route
