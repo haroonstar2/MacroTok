@@ -1,4 +1,4 @@
-/* ---------- Feed Page ---------- 
+/* Feed Page 
 Purpose: Layout + card grid + micro-components (chips, stat bars)
 Notes: Supports toggle states for Like (Heart) and Schedule (Calendar).
 */
@@ -30,7 +30,7 @@ Notes: Supports toggle states for Like (Heart) and Schedule (Calendar).
   padding: 0 20px 28px;
 }
 
-/* ---------- Header & Search ---------- */
+/* Header & Search */
 .feed-header {
   display: flex;
   align-items: center;
@@ -48,7 +48,7 @@ Notes: Supports toggle states for Like (Heart) and Schedule (Calendar).
   min-width: 280px;
 }
 
-/* ---------- Intro Section ---------- */
+/* Intro Section */
 .intro {
   padding: 10px 0 20px;
 }
@@ -60,7 +60,7 @@ Notes: Supports toggle states for Like (Heart) and Schedule (Calendar).
   margin-bottom: 6px;
 }
 
-/* ---------- Grid Layout ---------- */
+/* Grid Layout */
 .grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -73,7 +73,7 @@ Notes: Supports toggle states for Like (Heart) and Schedule (Calendar).
   }
 }
 
-/* ---------- Recipe Card ---------- */
+/* Recipe Card */
 .card {
   background: var(--panel);
   border: 1px solid var(--ring);
@@ -97,7 +97,7 @@ Notes: Supports toggle states for Like (Heart) and Schedule (Calendar).
   display: block;
 }
 
-/* ---------- Action Buttons (Toggle States) ---------- */
+/* Action Buttons (Toggle States) */
 .card-actions {
   position: absolute;
   right: 14px;
@@ -141,7 +141,7 @@ Notes: Supports toggle states for Like (Heart) and Schedule (Calendar).
   color: #e63946;
 }
 
-/* ---------- Date Picker Popover ---------- */
+/* Date Picker Popover */
 .date-picker-popover {
   position: absolute;
   top: 55px;
@@ -154,7 +154,7 @@ Notes: Supports toggle states for Like (Heart) and Schedule (Calendar).
   z-index: 20;
 }
 
-/* ---------- Card Content ---------- */
+/* Card Content */
 .card-body {
   padding: 16px;
 }
@@ -167,7 +167,7 @@ Notes: Supports toggle states for Like (Heart) and Schedule (Calendar).
   margin-bottom: 10px;
 }
 
-/* ---------- Macro Bars ---------- */
+/* Macro Bars */
 .stats {
   display: flex;
   flex-direction: column;
@@ -201,7 +201,7 @@ Notes: Supports toggle states for Like (Heart) and Schedule (Calendar).
   background: var(--orange);
 }
 
-/* ---------- Ingredient Chips ---------- */
+/* Ingredient Chips */
 .chips {
   display: flex;
   gap: 8px;
@@ -220,12 +220,12 @@ Notes: Supports toggle states for Like (Heart) and Schedule (Calendar).
 .card-link:hover .card {
   transform: translateY(-4px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-} /* ---------- Feed Page  ---------- 
+} /* Feed Page  
 Purpose: Layout + card grid + micro-components (chips, stat bars)
    Notes:
    - Uses CSS variables for easy theming.
    - Grid is 2 columns by default; 1 column on <= 1024px.
-   /* ---------- Theme Tokens (Light) ---------- */
+   /* Theme Tokens (Light) */
 
 :root {
   --bg: #f6f7f8; /*page back ground */
@@ -248,7 +248,7 @@ Purpose: Layout + card grid + micro-components (chips, stat bars)
   box-sizing: border-box;
 }
 
-/*  ---------- Page Shell ---------- */
+/*  Page Shell */
 .feed {
   color: var(--text);
   background: var(--bg);
@@ -278,7 +278,7 @@ Purpose: Layout + card grid + micro-components (chips, stat bars)
   min-width: 280px;
 }
 
-/* ---------- Intro section (hero text) ---------- */
+/* Intro section (hero text) */
 .intro {
   padding: 10px 0 20px;
 }
@@ -295,7 +295,7 @@ Purpose: Layout + card grid + micro-components (chips, stat bars)
   font-size: 16px;
 }
 
-/* ---------- Grid (like screenshot #2) ---------- */
+/* Grid (like screenshot #2) */
 /* 2 columns on desktop; stack on tablets/phones */
 .grid {
   display: grid;
@@ -309,7 +309,7 @@ Purpose: Layout + card grid + micro-components (chips, stat bars)
   }
 }
 
-/* ---------- Card ---------- */
+/* Card */
 .card {
   background: var(--panel);
   border: 1px solid var(--ring);
@@ -332,7 +332,7 @@ Purpose: Layout + card grid + micro-components (chips, stat bars)
   border-bottom: 1px solid var(--ring);
 }
 
-/* ---------- Heart (Like/Unlike) ----------
+/* Heart (Like/Unlike)
      Single, consolidated rule set:
      - Circular white button over the image
      - Hover scale for feedback
@@ -394,7 +394,7 @@ Purpose: Layout + card grid + micro-components (chips, stat bars)
   font-size: 12px;
 }
 
-/* ---------- Card Body ---------- */
+/* Card Body */
 .card-body {
   padding: 16px;
 }
@@ -415,7 +415,7 @@ Purpose: Layout + card grid + micro-components (chips, stat bars)
   margin-bottom: 10px;
 }
 
-/* ---------- Stat Bars (Protein / Carbs / Fats) ----------
+/* Stat Bars (Protein / Carbs / Fats)
      Thin bars with distinct colors; values/labels in .stat-row.
   */
 .stats {
@@ -456,7 +456,7 @@ Purpose: Layout + card grid + micro-components (chips, stat bars)
   background: var(--orange);
 }
 
-/* ---------- Key Ingredients (chips) ---------- */
+/* Key Ingredients (chips) */
 .keys-title {
   margin: 0 0 8px;
   color: #9aa1aa;
@@ -478,7 +478,7 @@ Purpose: Layout + card grid + micro-components (chips, stat bars)
   border-radius: 999px;
 }
 
-/* ---------- Utility / Buttons ---------- */
+/* Utility / Buttons */
 .container-padded {
   padding: 20px;
 }
@@ -505,7 +505,7 @@ Purpose: Layout + card grid + micro-components (chips, stat bars)
   background: #fff;
 }
 
-/* ---------- Motion preferences ---------- */
+/* Motion preferences */
 @media (prefers-reduced-motion: reduce) {
   .heart {
     transition: none;

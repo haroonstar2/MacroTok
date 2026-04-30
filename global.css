@@ -1,6 +1,4 @@
-/* =============================================================
-   Global Styles for MacroTok Demo
-   ============================================================= */
+/* Global Styles for MacroTok Demo */
 
 body {
   font-family: system-ui, sans-serif;
@@ -10,7 +8,7 @@ body {
   padding: 0;
 }
 
-/* ---------------- Calendar Styles ---------------- */
+/* Calendar Styles */
 .cal-card {
   max-width: 960px;
   margin: 16px auto;
@@ -18,7 +16,7 @@ body {
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   background: #fff;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.07);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.07);
 }
 .cal-header {
   display: flex;
@@ -165,7 +163,7 @@ body {
   color: #374151;
 }
 
-/* ---------------- Goal Card Styles ---------------- */
+/* Goal Card Styles */
 .goal-card {
   max-width: 480px;
   margin: 16px auto;
