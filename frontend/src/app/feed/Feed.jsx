@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import "./feed.css";
 import useRecipesStore from "../../store/recipeStore.js";
 import { getLikedPostIds } from "../../api/likesApi.js";
-import { getScheduledRecipeIds } from "../../api/calendar.js"; // Import the new calendar helper
+import { getScheduledRecipeIds } from "../../api/calendar.js";
 import RecipeCard from "../recipes/RecipeCard";
 
 export default function Feed() {

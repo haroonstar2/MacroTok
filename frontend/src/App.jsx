@@ -11,19 +11,25 @@ import {
 
 import MacroTokLogin from "./app/login/MacroTokLogin";
 import Calendar from "./app/calendar/Calendar";
-import Goal from "./app/calendar/Goal";
+
 import Landing from "./app/landing/Landing";
 import NewLanding from "./app/landing/NewLanding";
+
 import Feed from "./app/feed/Feed";
+import NewFeed from "./app/feed/NewFeed";
 import Sidebar from "./app/sidebar/Sidebar";
+
 import RecipeView from "./app/recipes/RecipeView";
+import NewRecipeView from "./app/recipes/NewRecipeView";
+
 import SettingsPage from "./app/profile/SettingsPage";
 import LikedPage from "./app/liked/LikedPage";
 import useRecipesStore from "./store/recipeStore";
 import "./app/sidebar/sidebar.css";
 import "./App.css";
 
-import { UserProvider } from "./UserContext";
+// import { UserProvider } from "./UserContext";
+import UserProvider from "./UserContext";
 import ProtectedRoute from "./ProtectedRoute";
 
 function AppLayout() {
@@ -76,7 +82,8 @@ function RecipePage() {
   const navigate = useNavigate();
 
   if (!recipe) return <div>Loading...</div>;
-  return <RecipeView recipe={recipe} onBack={() => navigate(-1)} />;
+  // return <RecipeView recipe={recipe} onBack={() => navigate(-1)} />;
+  return <NewRecipeView recipe={recipe} onBack={() => navigate(-1)} />;
 }
 
 export default function App() {
@@ -111,7 +118,8 @@ export default function App() {
                 </ProtectedRoute>
               }
             >
-              <Route path="/feed" element={<Feed />} />
+              {/* <Route path="/feed" element={<Feed />} /> */}
+              <Route path="/feed" element={<NewFeed />} />
               <Route path="/calendar" element={<PlannerPage />} />
               <Route path="/liked" element={<LikedPage />} />
               <Route path="/recipe/:id" element={<RecipePage />} />
