@@ -12,7 +12,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
 
-import UserProvider from "../../../UserContext";
+// import UserProvider from "../../UserContext";
 import SettingsPage from "./SettingsPage";
 import { UserProvider } from "../../UserContext";
 import { useUser } from "../../UserContext";

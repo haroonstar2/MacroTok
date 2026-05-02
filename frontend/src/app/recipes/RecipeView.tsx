@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { ArrowLeft, Clock, Flame, ChefHat, ChevronDown } from "lucide-react";
 import { Recipe } from "./recipe";
-// import { Button } from "../lib/ui-components";
 import { Button } from "../../components/ui/button";
 // import "./recipe-detail.css";
 import "../styles/recipe-detail.css";
