@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import type { User } from "firebase/auth";
 import { auth } from "../../../../startFirebase";
-import { Button } from "../ui/button";
+import { Button } from "../../../../components/ui/button";
 
 interface GetStartedButtonProps {
   className?: string;

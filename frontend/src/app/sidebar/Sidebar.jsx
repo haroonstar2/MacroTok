@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import "./sidebar.css";
+// import "./sidebar.css";
+import "../styles/sidebar-themed.css";
 import { useNavigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
