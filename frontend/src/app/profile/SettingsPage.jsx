@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../../startFirebase';
+import {
+  sendAccountDeactivatedEmail,
+  sendAccountDeletedEmail,
+} from '../../api/emailService';
 
-import { 
+import {
     onAuthStateChanged,
     sendPasswordResetEmail,
     signOut,
@@ -126,9 +130,21 @@ export default function SettingsPage() {
 
   };
 
-  const handleDeactivate = () => {
-    alert('Account deactivated. You can reactivate anytime by logging back in.');
-    setShowDeactivateDialog(false);
+  const handleDeactivate = async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+      await updateDoc(userDocRef, { isDeactivated: true });
+      setShowDeactivateDialog(false);
+      await sendAccountDeactivatedEmail(user);
+      alert('Your account has been deactivated. Log back in anytime to reactivate it.');
+      await signOut(auth);
+      navigate('/');
+    } catch (error) {
+      console.error('Deactivation failed:', error);
+      alert(`Error: ${error.message}`);
+    }
   };
 
   const handleDelete = async () => {
@@ -166,6 +182,9 @@ export default function SettingsPage() {
       // Delete user data from Firestore
       console.log("Deleting user data...");
       await deleteDoc(userDocRef);
+
+      // Send deletion email before deleting the auth account
+      await sendAccountDeletedEmail(user);
 
       // Delete the user account
       console.log("Deleting user account...");

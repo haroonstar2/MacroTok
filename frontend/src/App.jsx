@@ -3,11 +3,14 @@ import {
   BrowserRouter as Router,
   Routes,
   Route,
+  Navigate,
   useNavigate,
   useParams,
   Outlet,
   useLocation
 } from "react-router-dom";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "./startFirebase";
 
 import MacroTokLogin from "./app/login/MacroTokLogin"
 import Calendar from "./app/calendar/Calendar";
@@ -21,6 +24,21 @@ import LikedPage from "./app/liked/LikedPage";
 import useRecipesStore from "./store/recipeStore";
 import "./app/sidebar/sidebar.css";
 import "./App.css";
+
+function ProtectedRoute() {
+  const [authState, setAuthState] = useState('loading');
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setAuthState(user ? 'authenticated' : 'unauthenticated');
+    });
+    return () => unsubscribe();
+  }, []);
+
+  if (authState === 'loading') return null;
+  if (authState === 'unauthenticated') return <Navigate to="/login" replace />;
+  return <AppLayout />;
+}
 
 function AppLayout() {
   const location = useLocation();
@@ -89,7 +107,7 @@ export default function App() {
           <Route path="/login" element={<MacroTokLogin />}/>
           <Route path="/settings" element={<SettingsPage/>} />
 
-          <Route element={<AppLayout/>}>
+          <Route element={<ProtectedRoute />}>
             <Route path="/feed" element={<Feed />} />
             <Route path="/calendar" element={<PlannerPage />} />
             <Route path="/liked" element={<LikedPage />} />

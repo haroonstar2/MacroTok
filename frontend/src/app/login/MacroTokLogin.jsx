@@ -12,7 +12,12 @@ import {
   getAdditionalUserInfo,
   signOut
 } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
+import {
+  sendAccountCreatedEmail,
+  sendAccountReactivatedEmail,
+  sendPasswordResetNotificationEmail,
+} from '../../api/emailService';
 
 
 export default function MacroTokLogin() {
@@ -24,6 +29,28 @@ export default function MacroTokLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
+
+  // Returns true if the account is deactivated and the user chose NOT to reactivate.
+  // Reactivates the account in Firestore if the user confirms.
+  const handleDeactivatedAccount = async (user) => {
+    const docRef = doc(db, 'users', user.uid);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists() && docSnap.data().isDeactivated === true) {
+      const reactivate = window.confirm(
+        'Your account is currently deactivated.\n\nWould you like to reactivate it now?'
+      );
+      if (reactivate) {
+        await updateDoc(docRef, { isDeactivated: false });
+        await sendAccountReactivatedEmail(user);
+        return false; // proceed to app
+      } else {
+        await signOut(auth);
+        return true; // stay on login
+      }
+    }
+    return false; // account is active
+  };
 
   const handleGoogleSignIn = async () => {
     
@@ -54,7 +81,11 @@ export default function MacroTokLogin() {
               pushNotifications: true
             }
           });
+          await sendAccountCreatedEmail(user);
         }
+
+        const deactivated = await handleDeactivatedAccount(user);
+        if (deactivated) return;
 
         alert(`Success: Welcome, ${user.displayName}!`);
         navigate("/feed");
@@ -74,6 +105,10 @@ export default function MacroTokLogin() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       console.log("Sign in successful:", userCredential.user);
+
+      const deactivated = await handleDeactivatedAccount(userCredential.user);
+      if (deactivated) return;
+
       alert("Success: You are now signed in.");
       navigate("/feed");
     } catch(error) {
@@ -128,8 +163,9 @@ export default function MacroTokLogin() {
           }
         });
 
-        console.log("User document created");      
+        console.log("User document created");
         console.log("Sign up successful:", userCredential.user);
+        await sendAccountCreatedEmail({ email: user.email, displayName: name });
         alert("Account Created!: Your account has been successfully created. You are now signed in.");
         navigate("/feed")
     } catch (error) {
@@ -150,6 +186,7 @@ export default function MacroTokLogin() {
     }
     try {
         await sendPasswordResetEmail(auth, email);
+        await sendPasswordResetNotificationEmail({ email, displayName: null });
         alert(`Check Your Email: A password reset link has been sent to ${email}.`);
     } catch (error) {
         console.error("Password reset error:", error);
