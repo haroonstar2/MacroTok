@@ -32,38 +32,16 @@ import ProtectedRoute from "./ProtectedRoute";
 
 function AppLayout() {
   const location = useLocation();
-<<<<<<< HEAD
-=======
-
-  // This checks the current URL to tell the Sidebar which button to highlight
-  const active = location.pathname.split('/')[1] || "home";
-
->>>>>>> ca5b7f2 (Andres' Updates NOT DONE)
   const navigate = useNavigate();
 
   let active = "home";
   if (location.pathname.startsWith("/calendar")) active = "plan";
   if (location.pathname.startsWith("/liked")) active = "liked";
-
+  if (location.pathname.startsWith("/shopping")) active = "shopping";
+  if (location.pathname.startsWith("/bot")) active = "bot";
+  
+  
   const handleSidebarNav = (id) => {
-<<<<<<< HEAD
-    switch (id) {
-      case "home":
-        navigate("/feed");
-        break;
-      case "plan":
-        navigate("/calendar");
-        break;
-      case "liked":
-        navigate("/liked");
-        break;
-      case "settings":
-        navigate("/settings");
-        break;
-      default:
-        break;
-    }
-=======
   switch (id) {
     case "home":
       navigate("/feed");
@@ -71,21 +49,23 @@ function AppLayout() {
     case "plan":
       navigate("/calendar");
       break;
+    case "liked":
+      navigate("/liked");
+      break;
     case "shopping":
       navigate("/shopping");
-      break;
-    case "settings":
-      navigate("/settings");
       break;
     case "bot":
       navigate("/bot");
       break;
+    case "settings":
+      navigate("/settings");
+      break;
     default:
       break;
   }
+};
 
->>>>>>> ca5b7f2 (Andres' Updates NOT DONE)
-  };
 
   return (
     <div className="layout">
@@ -124,50 +104,37 @@ export default function App() {
   <div className={isDark ? "app app--dark" : "app app--light"}>
     <CartProvider>
       <Router>
-<<<<<<< HEAD
-        <UserProvider>
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/login" element={<MacroTokLogin />} />
+  <UserProvider>
+    <Routes>
+      <Route path="/" element={<Landing />} />
+      <Route path="/login" element={<MacroTokLogin />} />
+      <Route path="/setup-2fa" element={<Setup2FA />} />
 
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute>
-                  <SettingsPage />
-                </ProtectedRoute>
-              }
-            />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <SettingsPage />
+          </ProtectedRoute>
+        }
+      />
 
-            <Route
-              element={
-                <ProtectedRoute>
-                  <AppLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route path="/feed" element={<Feed />} />
-              <Route path="/calendar" element={<PlannerPage />} />
-              <Route path="/liked" element={<LikedPage />} />
-              <Route path="/recipe/:id" element={<RecipePage />} />
-            </Route>
-          </Routes>
-        </UserProvider>
-=======
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<MacroTokLogin />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/setup-2fa" element={<Setup2FA />} />
-          <Route element={<AppLayout />}>
-            <Route path="/feed" element={<Feed />} />
-            <Route path="/calendar" element={<PlannerPage />} />
-            <Route path="/recipe/:id" element={<RecipePage />} />
-              <Route path="/shopping" element={<ShoppingPage />} />
-            <Route path="/bot" element={<Bot />} />
-          </Route>
-        </Routes>
->>>>>>> ca5b7f2 (Andres' Updates NOT DONE)
+      <Route
+        element={
+          <ProtectedRoute>
+            <AppLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="/feed" element={<Feed />} />
+        <Route path="/calendar" element={<PlannerPage />} />
+        <Route path="/liked" element={<LikedPage />} />
+        <Route path="/recipe/:id" element={<RecipePage />} />
+        <Route path="/shopping" element={<ShoppingPage />} />
+        <Route path="/bot" element={<Bot />} />
+      </Route>
+    </Routes>
+  </UserProvider>
       </Router>
     </CartProvider>
   </div>
