@@ -1,26 +1,27 @@
 import React, { useEffect, useState } from "react";
-import { getLikedPostIds } from "../../api/likesApi";
-import useRecipesStore from "../../store/recipeStore";
+import { getLikedRecipes } from "../../api/likesApi";
 import RecipeCard from "../recipes/RecipeCard"; //
 import "../feed/feed.css"; // Reuse the layout styles
 
 function LikedPage() {
   const [likedPosts, setLikedPosts] = useState([]);
-  const recipes = useRecipesStore((state) => state.recipes);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       try {
-        const ids = await getLikedPostIds();
-        // Match the recipes from your store with the liked IDs
-        const filtered = recipes.filter((r) => ids.includes(String(r.id)));
-        setLikedPosts(filtered);
+        setLoading(true);
+
+        const recipes = await getLikedRecipes();
+        setLikedPosts(recipes);
       } catch (e) {
-        console.error(e);
+        console.error("Error loading liked posts:", e);
+      } finally {
+        setLoading(false);
       }
     }
     load();
-  }, [recipes]);
+  }, []);
 
   return (
     <div className="feed">
@@ -35,9 +36,9 @@ function LikedPage() {
           <p className="loading-text">No liked posts yet.</p>
         ) : (
           likedPosts.map((p) => (
-            <RecipeCard 
-              key={p.id} 
-              recipe={p} 
+            <RecipeCard
+              key={p.id}
+              recipe={p}
               initiallyLiked={true} //
             />
           ))

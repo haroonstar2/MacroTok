@@ -69,7 +69,7 @@ function PlannerPage() {
 
 function RecipePage() {
   const { id } = useParams();
-  const recipes = useRecipesStore((state) => state.recipes);
+  const recipes = useRecipesStore((state) => state.feedRecipes);
   const recipe = recipes.find((r) => String(r.id) === String(id));
   const navigate = useNavigate();
 
