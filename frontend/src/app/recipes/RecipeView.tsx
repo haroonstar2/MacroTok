@@ -6,19 +6,59 @@ import { Button } from "../../components/ui/button";
 // import "./recipe-detail.css";
 import "../styles/recipe-detail.css";
 
+import "./recipe.css";
+import DropDown from "./DropDownMenu/dropDown.jsx";
+import "./DropDownMenu/dropDown.css";
+import DropdownItem from "./DropDownMenu/dropDownItem";
+
 function getNutrient(recipe: Recipe, name: string): number {
   return recipe.nutrition?.nutrients?.find((n) => n.name === name)?.amount ?? 0;
 }
 
-interface NewRecipeViewProps {
+function convertFraction(decimal: number) {
+  if (!decimal) return "";
+
+  const tolerance = 1.0e-6;
+  let h1 = 1,
+    h2 = 0;
+  let k1 = 0,
+    k2 = 1;
+  let b = decimal;
+
+  do {
+    const a = Math.floor(b);
+    let aux = h1;
+    h1 = a * h1 + h2;
+    h2 = aux;
+    aux = k1;
+    k1 = a * k1 + k2;
+    k2 = aux;
+    b = 1 / (b - a);
+  } while (Math.abs(decimal - h1 / k1) > decimal * tolerance);
+  return `${h1}/${k1}`;
+}
+
+function formatting(value: number) {
+  if (Number.isInteger(value)) return value;
+
+  const whole = Math.floor(value);
+  const fraction = convertFraction(value - whole);
+
+  if (whole == 0) return fraction;
+  return `${whole} ${fraction}`;
+}
+
+interface RecipeViewProps {
   recipe: any;
   onBack: () => void;
 }
 
-export default function NewRecipeView({ recipe, onBack }: NewRecipeViewProps) {
+export default function RecipeView({ recipe, onBack }: RecipeViewProps) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isInstructionsOpen, setIsInstructionsOpen] = useState(false);
+  const [servings, setServing] = useState(1);
+  const items = [1, 2, 3, 4, 5, 6, 7];
 
   if (!recipe) {
     return (
@@ -75,6 +115,26 @@ export default function NewRecipeView({ recipe, onBack }: NewRecipeViewProps) {
                 <ChefHat className="meta-badge-icon" />
                 <span>{recipe.servings} servings</span>
               </div>
+
+              {/*Drop Down Menu Section*/}
+              <div className="meta-badge">
+                <DropDown
+                  buttonText={`Servings: ${servings}`}
+                  content={
+                    <>
+                      {items.map((item) => (
+                        <DropdownItem
+                          key={item}
+                          onClick={() => setServing(item)}
+                        >
+                          {item}
+                        </DropdownItem>
+                      ))}
+                    </>
+                  }
+                />
+              </div>
+              {/*End Drop Down Menu Section*/}
             </div>
 
             {/* Nutrition Stats */}
@@ -108,7 +168,10 @@ export default function NewRecipeView({ recipe, onBack }: NewRecipeViewProps) {
                     key={index}
                     className="ingredient-pill bg-slate-50 p-2 rounded border"
                   >
-                    {item.original}
+                    <span>
+                      {formatting(item.amount * servings)} {item.unit}
+                    </span>
+                    <span> {item.name}</span>
                   </li>
                 ))}
               </ul>

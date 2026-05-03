@@ -33,3 +33,18 @@ export const getLikedPostIds = async () => {
   );
   return querySnapshot.docs.map((doc) => doc.id);
 };
+
+export const getLikedRecipes = async () => {
+  const user = auth.currentUser;
+  if (!user) return [];
+  try {
+    const querySnapshot = await getDocs(
+      collection(db, "users", user.uid, "likedRecipes"),
+    );
+
+    return querySnapshot.docs.map((doc) => doc.data());
+  } catch (error) {
+    console.error("Error fetching liked recipes:", error);
+    return [];
+  }
+};

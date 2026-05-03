@@ -14,6 +14,10 @@ import { getLikedPostIds } from "../../api/likesApi.js";
 import { getScheduledRecipeIds } from "../../api/calendar.js";
 import RecipeCard from "../recipes/RecipeCard.jsx";
 
+import DropDown from "../recipes/DropDownMenu/dropDown.jsx";
+import "../recipes/DropDownMenu/dropDown.css";
+import DropdownItem from "../recipes/DropDownMenu/dropDownItem";
+
 // Recipe type definition
 interface Nutrient {
   name: string;
@@ -35,6 +39,9 @@ interface Recipe {
   title: string;
   image: string;
   readyInMinutes: number;
+  vegan?: boolean;
+  dairyFree?: boolean;
+  glutenFree?: boolean;
   nutrition?: {
     nutrients: Nutrient[];
   };
@@ -45,28 +52,23 @@ interface Recipe {
 }
 
 // Feed Main Component
-export default function NewFeed() {
-  const recipes = useRecipesStore((state) => state.recipes || []);
-  const loadRecipesFromFirestore = useRecipesStore(
-    (state) => state.loadRecipesFromFirestore,
-  );
-
-  const setRandom = useRecipesStore((state) => state.setRandom);
-  const getRandomRecipe = useRecipesStore((state) => state.getRandomRecipe);
+export default function Feed() {
+  const recipes = useRecipesStore((state) => state.feedRecipes || []);
+  const getFeedRecipe = useRecipesStore((state) => state.getFeedRecipe);
 
   const [likedIds, setLikedIds] = useState<string[]>([]);
   const [scheduledIds, setScheduledIds] = useState<string[]>([]); // State to track scheduled recipes
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeFilter, setActiveFilter] = useState("All");
+  const filterOptions = ["All", "Vegan", "Gluten Free", "Dairy Free"];
 
   const navigate = useNavigate();
 
   // Fetch Recipes
   useEffect(() => {
-    if (getRandomRecipe) getRandomRecipe();
-    if (setRandom) setRandom(4);
-    if (loadRecipesFromFirestore) loadRecipesFromFirestore();
-  }, [getRandomRecipe, setRandom, loadRecipesFromFirestore]);
+    getFeedRecipe();
+  }, []);
 
   useEffect(() => {
     async function loadUserData() {
@@ -85,8 +87,25 @@ export default function NewFeed() {
   }, []);
 
   const filteredRecipes = recipes.filter((recipe: Recipe) => {
+    // Check the search query
     const safeTitle = recipe?.title || "";
-    return safeTitle.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = safeTitle
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+
+    // Check the dietary category
+    let matchesCategory = true; // Defaults to true for "All"
+
+    if (activeFilter === "Vegan") {
+      matchesCategory = recipe.vegan ?? false;
+    } else if (activeFilter === "Dairy Free") {
+      matchesCategory = recipe.dairyFree ?? false;
+    } else if (activeFilter === "Gluten Free") {
+      matchesCategory = recipe.glutenFree ?? false;
+    }
+
+    //Return true only if it matches both the text search AND the category
+    return matchesSearch && matchesCategory;
   });
 
   return (
@@ -110,6 +129,22 @@ export default function NewFeed() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
+
+          <DropDown
+            buttonText={`Filter: ${activeFilter}`}
+            content={
+              <>
+                {filterOptions.map((option) => (
+                  <DropdownItem
+                    key={option}
+                    onClick={() => setActiveFilter(option)}
+                  >
+                    {option}
+                  </DropdownItem>
+                ))}
+              </>
+            }
+          />
         </div>
       </section>
 

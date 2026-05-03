@@ -7,7 +7,7 @@ import { CommunityFeedSection } from "./components/CommunityFeedSection";
 import { CTASection } from "./components/CTASection";
 import { Footer } from "./components/Footer";
 
-export default function NewLanding() {
+export default function Landing() {
   return (
     <div className="min-h-screen relative bg-gradient-to-br from-white via-slate-50 to-blue-50/30">
       {/* Decorative gradient blobs */}
