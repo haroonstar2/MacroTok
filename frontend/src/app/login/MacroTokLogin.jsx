@@ -30,6 +30,7 @@ export default function MacroTokLogin() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
@@ -104,13 +105,14 @@ export default function MacroTokLogin() {
     try {
       await emailSignUp(email, password, name);
       console.log("User document created");
-      console.log("Sign up successful:", userCredential.user);
-
       alert(
         "Account Created!: Your account has been successfully created. You are now signed in.",
       );
+      alert(
+       "Account created! We sent a verification email. You can turn on 2FA later in Settings after verifying your email."
+      );
 
-      navigate("/feed");
+navigate("/feed");
     } catch (error) {
       console.error("Sign up error:", error.code, error.message);
       if (error.code === "auth/email-already-in-use") {
@@ -203,18 +205,32 @@ export default function MacroTokLogin() {
             }}
           >
             {isSignUp && (
-              <div className="container-9">
-                <label className="label">Full Name</label>
-                <input
-                  type="text"
-                  className="input"
-                  placeholder="John Doe"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
-              </div>
-            )}
+  <div className="container-9">
+    <label className="label">Full Name</label>
+    <input
+      type="text"
+      className="input"
+      placeholder="John Doe"
+      value={name}
+      onChange={(e) => setName(e.target.value)}
+      required
+    />
+  </div>
+)}
+
+  {isSignUp && (
+    <div className="container-9">
+    <label className="label">Phone Number</label>
+    <input
+      type="tel"
+      className="input"
+      placeholder="+15555555555"
+      value={phone}
+      onChange={(e) => setPhone(e.target.value)}
+      required
+      />
+      </div>
+)}
 
             <div className="container-9">
               <label className="label">Email Address</label>
@@ -385,3 +401,4 @@ export default function MacroTokLogin() {
     </div>
   );
 }
+

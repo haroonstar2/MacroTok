@@ -6,6 +6,8 @@ import { Button } from "../../components/ui/button";
 // import "./recipe-detail.css";
 import "../styles/recipe-detail.css";
 
+import { useCart } from "../../context/cartcontext"; 
+
 import "./recipe.css";
 import DropDown from "./DropDownMenu/dropDown.jsx";
 import "./DropDownMenu/dropDown.css";
@@ -54,11 +56,13 @@ interface RecipeViewProps {
 }
 
 export default function RecipeView({ recipe, onBack }: RecipeViewProps) {
-  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isInstructionsOpen, setIsInstructionsOpen] = useState(false);
   const [servings, setServing] = useState(1);
   const items = [1, 2, 3, 4, 5, 6, 7];
+  const { addSingleItem, addRecipeToCart } = useCart() as any;
+  const getIngredientText = (item: any) =>
+  `${formatting(item.amount * servings)} ${item.unit || ""} ${item.name || ""}`.trim();
 
   if (!recipe) {
     return (
@@ -100,6 +104,10 @@ export default function RecipeView({ recipe, onBack }: RecipeViewProps) {
           {/* Recipe Details */}
           <div className="showcase-details">
             <h1 className="recipe-showcase-title">{recipe.title}</h1>
+            <Button
+              className="btn"
+              onClick={() => addRecipeToCart(recipe)}
+            > Add All Ingredients to Cart </Button>
 
             {/* Recipe Meta */}
             <div className="showcase-meta">
@@ -113,13 +121,13 @@ export default function RecipeView({ recipe, onBack }: RecipeViewProps) {
               </div>
               <div className="meta-badge">
                 <ChefHat className="meta-badge-icon" />
-                <span>{recipe.servings} servings</span>
+                <span> Yields {recipe.servings}</span>
               </div>
 
               {/*Drop Down Menu Section*/}
               <div className="meta-badge">
                 <DropDown
-                  buttonText={`Servings: ${servings}`}
+                    buttonText={`${servings} serving${servings === 1 ? "" : "s"}`}
                   content={
                     <>
                       {items.map((item) => (
@@ -160,22 +168,27 @@ export default function RecipeView({ recipe, onBack }: RecipeViewProps) {
             </div>
 
             {/* Ingredients Section */}
-            <div className="ingredients-section">
-              <h2 className="section-heading">Ingredients</h2>
-              <ul className="ingredients-grid">
-                {recipe.extendedIngredients?.map((item: any, index: number) => (
-                  <li
-                    key={index}
-                    className="ingredient-pill bg-slate-50 p-2 rounded border"
-                  >
-                    <span>
-                      {formatting(item.amount * servings)} {item.unit}
-                    </span>
-                    <span> {item.name}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+      <div className="ingredients-section">
+        <h2 className="section-heading">Ingredients</h2>
+
+        <ul className="ingredients-grid">
+        {recipe.extendedIngredients?.map((item: any, index: number) => (
+        <li
+          key={item.id ?? index}
+          className="ingredient-pill bg-slate-50 p-2 rounded border"
+         onClick={() => addSingleItem(getIngredientText(item))}
+        role="button"
+          tabIndex={0}
+        >
+        <span>
+         {formatting(item.amount * servings)} {item.unit} {item.name}
+        </span>
+
+        <span className="ingredient-tooltip">Add to shopping list</span>
+        </li>
+     ))}
+  </ul>
+</div>
 
             {/* Instructions Section */}
             <div className="instructions-section">

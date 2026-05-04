@@ -2,8 +2,15 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../../startFirebase";
 
-import { sendPasswordResetEmail, signOut } from "firebase/auth";
-
+import {
+  sendPasswordResetEmail,
+  signOut,
+  sendEmailVerification,
+  RecaptchaVerifier,
+  multiFactor,
+  PhoneAuthProvider,
+  PhoneMultiFactorGenerator,
+} from "firebase/auth";
 import useSettings from "./useSettings";
 import { useUser } from "../../UserContext";
 
@@ -23,7 +30,12 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("profile");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showDeactivateDialog, setShowDeactivateDialog] = useState(false);
-
+  const [show2FASetup, setShow2FASetup] = useState(false);
+  const [twoFAPhone, setTwoFAPhone] = useState("");
+  const [twoFACode, setTwoFACode] = useState("");
+  const [verificationId, setVerificationId] = useState("");
+  const [sending2FA, setSending2FA] = useState(false);
+  const [verifying2FA, setVerifying2FA] = useState(false);
   // Profile picture
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
@@ -132,6 +144,105 @@ export default function SettingsPage() {
     }
   };
 
+  const handleSend2FACode = async () => {
+  if (!user) {
+    alert("Please sign in first.");
+    return;
+  }
+
+  if (!twoFAPhone) {
+    alert("Please enter a phone number in this format: +15555555555");
+    return;
+  }
+
+  try {
+    setSending2FA(true);
+
+    await user.reload();
+
+    if (!user.emailVerified) {
+      await sendEmailVerification(user);
+      alert(
+        "Please verify your email before turning on 2FA. We sent a verification email."
+      );
+      return;
+    }
+
+    if (window.recaptchaVerifier) {
+      window.recaptchaVerifier.clear();
+    }
+
+    window.recaptchaVerifier = new RecaptchaVerifier(
+      auth,
+      "recaptcha-container",
+      {
+        size: "invisible",
+      }
+    );
+
+    const session = await multiFactor(user).getSession();
+
+    const phoneInfoOptions = {
+      phoneNumber: twoFAPhone,
+      session,
+    };
+
+    const phoneProvider = new PhoneAuthProvider(auth);
+
+    const id = await phoneProvider.verifyPhoneNumber(
+      phoneInfoOptions,
+      window.recaptchaVerifier
+    );
+
+    setVerificationId(id);
+    alert("SMS code sent.");
+  } catch (error) {
+    console.error("Send 2FA code error:", error);
+    if (error.code === "auth/requires-recent-login") {
+    alert("For security, please sign in again before adding 2FA.");
+  } else {
+    alert(error.message);
+  }
+  } finally {
+    setSending2FA(false);
+  }
+};
+
+const handleVerifyAndEnable2FA = async () => {
+  if (!user) {
+    alert("Please sign in first.");
+    return;
+  }
+
+  if (!verificationId || !twoFACode) {
+    alert("Please enter the SMS code.");
+    return;
+  }
+
+  try {
+    setVerifying2FA(true);
+
+    const phoneCredential = PhoneAuthProvider.credential(
+      verificationId,
+      twoFACode
+    );
+
+    const assertion = PhoneMultiFactorGenerator.assertion(phoneCredential);
+
+    await multiFactor(user).enroll(assertion, "Phone number");
+
+    alert("Phone 2FA has been enabled.");
+    setShow2FASetup(false);
+    setTwoFAPhone("");
+    setTwoFACode("");
+    setVerificationId("");
+  } catch (error) {
+    console.error("Enable 2FA error:", error);
+    alert(error.message);
+  } finally {
+    setVerifying2FA(false);
+  }
+};
   const handleSignOut = () => {
     // Sign out of Firebase
     signOut(auth);
@@ -808,17 +919,111 @@ export default function SettingsPage() {
                   Add an extra layer of security to your account
                 </p>
                 <button
-                  style={{
-                    padding: "10px 20px",
-                    backgroundColor: "transparent",
-                    color: state.isDarkMode ? "white" : "#0f172b",
-                    border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                  }}
-                >
-                  Enable 2FA
-                </button>
+  onClick={() => setShow2FASetup(!show2FASetup)}
+  style={{
+    padding: "10px 20px",
+    backgroundColor: "transparent",
+    color: state.isDarkMode ? "white" : "#0f172b",
+    border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
+    borderRadius: "8px",
+    cursor: "pointer",
+  }}
+>
+  {show2FASetup ? "Cancel 2FA Setup" : "Enable 2FA"}
+</button>
+
+{show2FASetup && (
+  <div style={{ marginTop: "20px" }}>
+    <label
+      style={{
+        display: "block",
+        marginBottom: "8px",
+        color: state.isDarkMode ? "white" : "#0f172b",
+      }}
+    >
+      Phone Number
+    </label>
+
+    <input
+      type="tel"
+      placeholder="+15555555555"
+      value={twoFAPhone}
+      onChange={(e) => setTwoFAPhone(e.target.value)}
+      style={{
+        width: "100%",
+        padding: "10px 8px",
+        marginBottom: "12px",
+        border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
+        borderRadius: "8px",
+        backgroundColor: state.isDarkMode ? "#0f172b" : "white",
+        color: state.isDarkMode ? "white" : "#0f172b",
+      }}
+    />
+
+    <button
+      onClick={handleSend2FACode}
+      disabled={sending2FA}
+      style={{
+        padding: "10px 20px",
+        backgroundColor: "#4f39f6",
+        color: "white",
+        border: "none",
+        borderRadius: "8px",
+        cursor: sending2FA ? "not-allowed" : "pointer",
+        marginBottom: "12px",
+      }}
+    >
+      {sending2FA ? "Sending..." : "Send SMS Code"}
+    </button>
+
+    {verificationId && (
+      <div style={{ marginTop: "12px" }}>
+        <label
+          style={{
+            display: "block",
+            marginBottom: "8px",
+            color: state.isDarkMode ? "white" : "#0f172b",
+          }}
+        >
+          SMS Code
+        </label>
+
+        <input
+          type="text"
+          placeholder="Enter code"
+          value={twoFACode}
+          onChange={(e) => setTwoFACode(e.target.value)}
+          style={{
+            width: "100%",
+            padding: "10px 8px",
+            marginBottom: "12px",
+            border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
+            borderRadius: "8px",
+            backgroundColor: state.isDarkMode ? "#0f172b" : "white",
+            color: state.isDarkMode ? "white" : "#0f172b",
+          }}
+        />
+
+        <button
+          onClick={handleVerifyAndEnable2FA}
+          disabled={verifying2FA}
+          style={{
+            padding: "10px 20px",
+            backgroundColor: "#4f39f6",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+            cursor: verifying2FA ? "not-allowed" : "pointer",
+          }}
+        >
+          {verifying2FA ? "Verifying..." : "Verify and Enable 2FA"}
+        </button>
+      </div>
+    )}
+
+    <div id="recaptcha-container"></div>
+  </div>
+)}
               </div>
             </div>
           )}
