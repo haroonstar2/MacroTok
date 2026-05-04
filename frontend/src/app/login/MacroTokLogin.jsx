@@ -1,109 +1,145 @@
 import React, { useState } from "react";
 import "./login.css";
-import "./style.css"
-import { useNavigate } from "react-router";
-// import { auth, db } from "../../firebaseConfig";
- import { auth } from "../../../../backend/firebaseConfig"; //load from backend
+import "./style.css";
+import { useNavigate } from "react-router-dom";
+import { db, auth, provider } from "../../startFirebase";
 
-import { 
-    createUserWithEmailAndPassword,
-    signInWithEmailAndPassword,
-    signInWithPopup,
-    GoogleAuthProvider,
-    sendPasswordResetEmail,
-    signOut
-} from "firebase/auth";
+import { sendPasswordResetEmail } from "firebase/auth";
 
-// INITIALIZE FIREBASE ---
-const provider = new GoogleAuthProvider();
+import {
+  sendAccountCreatedEmail,
+  sendAccountReactivatedEmail,
+  sendPasswordResetNotificationEmail,
+} from "../../api/emailService";
+
+import { useUser } from "../../UserContext";
 
 export default function MacroTokLogin() {
+  const {
+    user,
+    setUser,
+    googleSignIn,
+    emailSignIn,
+    emailSignUp,
+    resetPassword,
+    reactivateAccount,
+  } = useUser();
+
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
 
-  const handleGoogleSignIn = async () => {
-    
-    try {
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-        console.log("Google sign in successful:", user);
-        alert(`Success: Welcome, ${user.displayName}!`);
-        navigate("/feed");
-    } catch (error) {
-        console.error("Google sign in error:", error.code, error.message);
-        alert(`Google Sign In Error ${error.message}`);
+  // Returns true if the account is deactivated and the user chose NOT to reactivate.
+  // Reactivates the account in Firestore if the user confirms.
+  const handleDeactivatedAccount = async (user) => {
+    const docRef = doc(db, "users", user.uid);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists() && docSnap.data().isDeactivated === true) {
+      const reactivate = window.confirm(
+        "Your account is currently deactivated.\n\nWould you like to reactivate it now?",
+      );
+      if (reactivate) {
+        await reactivateAccount(user);
+        return false;
+      } else {
+        await signOut(auth);
+        return true;
+      }
     }
-  }
+    return false;
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const user = await googleSignIn();
+      alert(`Success: Welcome, ${user.displayName}!`);
+      navigate("/feed");
+    } catch (error) {
+      console.error("Google sign in error:", error.code, error.message);
+      alert(`Google Sign In Error ${error.message}`);
+    }
+  };
 
   const handleEmailSignIn = async () => {
-
     if (!email || !password) {
+      console.error("Email and password are required.");
+      alert("Email and password are required.");
+      return;
+    }
+
+    try {
+      const user = await emailSignIn(email, password);
+      alert(`Success: Welcome, ${user.displayName || user.email}!`);
+      navigate("/feed");
+    } catch (error) {
+      console.error("Email sign in error:", error.code, error.message);
+      alert(`Email Sign In Error ${error.message}`);
+    }
+  };
+
+  const handleSignUp = async () => {
+    if (!email || !password) {
+      console.error("Email and password are required.");
       alert("Error: Please enter both email and password.");
       return;
     }
 
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      console.log("Sign in successful:", userCredential.user);
-      alert("Success: You are now signed in.");
-      navigate("/feed");
-    } catch(error) {
-      console.error("Sign in error:", error.code, error.message);
-      if (error.code === "auth/invalid-credential" || error.code === "auth/wrong-password" || error.code === "auth/user-not-found") {
-          alert("Sign In Failed: Invalid email or password. Please try again.");
-      } else {
-          alert(`Sign In Error: ${error.message}`);
-      }
-    }
-  }
-
-  const handleSignUp = async () => {
-
-    if (!email || !password) {
-      alert("Sign Up Error: Please enter an email and password in the fields first.");
+    if (password != confirmPassword) {
+      console.error("Passwords do not match.");
+      alert("Error: Passwords do not match.");
       return;
     }
 
     if (password.length < 6) {
-      alert("Sign Up Error: Password must be at least 6 characters long.");
+      alert("Error: Password must be at least 6 characters long.");
       return;
     }
 
     try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        console.log("Sign up successful:", userCredential.user);
-        alert("Account Created!: Your account has been successfully created. You are now signed in.");
-        navigate("/feed")
-    } catch (error) {
-        console.error("Sign up error:", error.code, error.message);
-        if (error.code === "auth/email-already-in-use") {
-            alert("Sign Up Failed: This email address is already in use.");
-        } else {
-            alert(`Sign Up Error: ${error.message}`);
-        }
-    }
+      await emailSignUp(email, password, name);
+      console.log("User document created");
+      alert(
+        "Account Created!: Your account has been successfully created. You are now signed in.",
+      );
+      alert(
+       "Account created! We sent a verification email. You can turn on 2FA later in Settings after verifying your email."
+      );
 
-  }
+navigate("/feed");
+    } catch (error) {
+      console.error("Sign up error:", error.code, error.message);
+      if (error.code === "auth/email-already-in-use") {
+        alert("Sign Up Failed: This email address is already in use.");
+      } else {
+        alert(`Sign Up Error: ${error.message}`);
+      }
+    }
+  };
 
   const handleForgetPassword = async () => {
     if (!email) {
-      alert("Password Reset: Please enter your email address in the email field first.");
+      alert(
+        "Password Reset: Please enter your email address in the email field first.",
+      );
       return;
     }
     try {
-        await sendPasswordResetEmail(auth, email);
-        alert(`Check Your Email: A password reset link has been sent to ${email}.`);
+      await sendPasswordResetEmail(auth, email);
+      alert(
+        `Check Your Email: A password reset link has been sent to ${email}.`,
+      );
     } catch (error) {
-        console.error("Password reset error:", error);
-        alert(`Password Reset Error: ${error.message}`);
+      console.error("Password reset error:", error);
+      alert(`Password Reset Error: ${error.message}`);
     }
-  }
+  };
 
   return (
     <div className="modern-login-page">
@@ -135,7 +171,10 @@ export default function MacroTokLogin() {
             </div>
           </div>
 
-          <button id="google-signin-btn" className="button" type="button"
+          <button
+            id="google-signin-btn"
+            className="button"
+            type="button"
             onClick={handleGoogleSignIn}
           >
             <img
@@ -154,29 +193,44 @@ export default function MacroTokLogin() {
             </div>
           </div>
 
-          <form className="form" 
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (isSignUp) {
-              handleSignUp();
-            } else {
-              handleEmailSignIn();
-            }
-          }}
+          <form
+            className="form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (isSignUp) {
+                handleSignUp();
+              } else {
+                handleEmailSignIn();
+              }
+            }}
           >
             {isSignUp && (
-              <div className="container-9">
-                <label className="label">Full Name</label>
-                <input
-                  type="text"
-                  className="input"
-                  placeholder="John Doe"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
-              </div>
-            )}
+  <div className="container-9">
+    <label className="label">Full Name</label>
+    <input
+      type="text"
+      className="input"
+      placeholder="John Doe"
+      value={name}
+      onChange={(e) => setName(e.target.value)}
+      required
+    />
+  </div>
+)}
+
+  {isSignUp && (
+    <div className="container-9">
+    <label className="label">Phone Number</label>
+    <input
+      type="tel"
+      className="input"
+      placeholder="+15555555555"
+      value={phone}
+      onChange={(e) => setPhone(e.target.value)}
+      required
+      />
+      </div>
+)}
 
             <div className="container-9">
               <label className="label">Email Address</label>
@@ -206,7 +260,7 @@ export default function MacroTokLogin() {
                 <input
                   type={showPassword ? "text" : "password"}
                   className="input-2"
-                  placeholder="••••••••"
+                  placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -231,16 +285,14 @@ export default function MacroTokLogin() {
                   <input
                     type={showConfirmPassword ? "text" : "password"}
                     className="input-2"
-                    placeholder="••••••••"
+                    placeholder="Confirm Password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
                   />
                   <div
                     className="icon-wrapper"
-                    onClick={() =>
-                      setShowConfirmPassword(!showConfirmPassword)
-                    }
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
                     <img
                       src="https://c.animaapp.com/jsUBuoxq/img/button.svg"
@@ -261,13 +313,11 @@ export default function MacroTokLogin() {
 
           <div className="paragraph-2">
             <p className="don-t-have-an">
-              {isSignUp
-                ? "Already have an account?"
-                : "Don't have an account?"}
+              {isSignUp ? "Already have an account?" : "Don't have an account?"}
             </p>
             <button className="button-4" onClick={() => setIsSignUp(!isSignUp)}>
               <div className="text-wrapper-8">
-                {isSignUp ? "Sign in" : "Sign up"}
+                {isSignUp ? "Sign In" : "Sign Up"}
               </div>
             </button>
           </div>
@@ -351,3 +401,4 @@ export default function MacroTokLogin() {
     </div>
   );
 }
+

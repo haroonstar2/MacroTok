@@ -1,4 +1,4 @@
-import { API_BASE } from "../config";
+import { API_BASE } from "./config";
 
 /**
  * Generic API helper for real backend requests.

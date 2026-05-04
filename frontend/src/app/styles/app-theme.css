@@ -1,0 +1,79 @@
+/* ============================================================
+   MACROTOK APP THEME
+   ------------------------------------------------------------
+   Unified color palette and design tokens matching the
+   landing page and login design system.
+   ============================================================ */
+
+:root {
+  /* Background Colors */
+  --app-bg: linear-gradient(106.458deg, rgb(255, 255, 255) 0%, rgb(248, 250, 252) 50%, rgba(239, 246, 255, 0.3) 100%);
+  --app-bg-solid: #f8fafb;
+  --app-panel: #ffffff;
+  --app-panel-glass: rgba(255, 255, 255, 0.6);
+  --app-panel-dark: rgba(49, 65, 88, 0.5);
+  
+  /* Text Colors */
+  --app-text-primary: #0f172b;
+  --app-text-secondary: #314158;
+  --app-text-muted: #45556c;
+  --app-text-light: #90a1b9;
+  --app-text-lighter: #cad5e2;
+  
+  /* Accent Colors */
+  --app-accent: #4f39f6;
+  --app-accent-light: #e0e7ff;
+  
+  /* Border & Divider Colors */
+  --app-border: #e5e7eb;
+  --app-border-light: rgba(229, 231, 235, 0.5);
+  --app-border-dark: #45556c;
+  
+  /* Shadows */
+  --app-shadow-sm: 0px 2px 8px 0px rgba(31, 38, 135, 0.08);
+  --app-shadow-md: 0px 4px 16px 0px rgba(31, 38, 135, 0.1);
+  --app-shadow-lg: 0px 8px 32px 0px rgba(31, 38, 135, 0.15);
+  --app-shadow-xl: 0px 10px 15px -3px rgba(0, 0, 0, 0.1), 0px 4px 6px -4px rgba(0, 0, 0, 0.1);
+  
+  /* Macro Colors (for nutrition bars) */
+  --app-protein: #4f39f6;
+  --app-carbs: #22c55e;
+  --app-fats: #f59e0b;
+  
+  /* Button Colors */
+  --app-btn-primary-bg: #0f172b;
+  --app-btn-primary-text: #ffffff;
+  
+  /* Dark Section Background */
+  --app-dark-bg: linear-gradient(149.35deg, rgb(29, 41, 61) 0%, rgb(15, 23, 43) 100%);
+}
+
+/* Apply to body or main app container */
+.app-themed {
+  font-family: 'Arimo', sans-serif;
+  color: var(--app-text-primary);
+}
+
+/* Typography defaults matching the design system */
+.app-themed h1,
+.app-themed h2,
+.app-themed h3,
+.app-themed h4 {
+  font-family: 'Arimo', sans-serif;
+  font-weight: 400;
+}
+
+/* Utility classes for consistent styling */
+.app-glass-panel {
+  background: var(--app-panel-glass);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: var(--app-shadow-lg);
+  backdrop-filter: blur(10px);
+}
+
+.app-card {
+  background: var(--app-panel);
+  border: 1px solid var(--app-border);
+  box-shadow: var(--app-shadow-xl);
+  border-radius: 16px;
+}
