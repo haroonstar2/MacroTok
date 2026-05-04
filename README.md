@@ -23,7 +23,6 @@ Trying to cut weight? Maybe you're trying to gain weight? Or maybe you just want
 For quick testing, the webpage is currently being hosted on https://macro-tok.vercel.app/
 
 For file - and development build testing (assuming npm is installed)
-
 ```bash
 cd frontend
 npm install
