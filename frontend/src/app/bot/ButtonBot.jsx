@@ -4,11 +4,11 @@ import { useNavigate } from "react-router-dom";
 import useRecipesStore from "../../store/recipeStore";
 import { BOT_NAME, botStyles as styles, getOptionsForNode } from "./BotData";
 import BotRecipeCard from "./BotRecipeCard";
-
+import { ACTUAL_SPOONACULAR_RECIPES } from "../../store/actual_spoonacular_recipes";
 
 export default function ButtonBot() {
   const navigate = useNavigate();
-  const recipes = useRecipesStore((state) => state.recipes);
+  const recipes = useRecipesStore((state) => state.feedRecipes);
 
   // Each message: { from: "bot" | "user", text: string }
   const [messages, setMessages] = useState([
@@ -61,43 +61,51 @@ export default function ButtonBot() {
 
   // --- PART E: Handle "action" buttons (The Filtering Math) ---
   if (opt.type === "action" && opt.key === "fetch_yes") {
-    // Helper to dig into your nested API data
-    // Inside handlePick, under if (opt.key === "fetch_yes")
-const getNutrient = (r, name) => 
-  r.nutrition?.nutrients?.find((n) => n.name === name)?.amount ?? 0;
+  const recipeSource =
+  recipes && recipes.length > 0 ? recipes : ACTUAL_SPOONACULAR_RECIPES;
+  console.log("BOT recipes:", recipes);
+  console.log("BOT recipeFilter:", recipeFilter);
+  console.log("BOT first recipe:", recipes[0]);
 
-// This looks through EVERYTHING currently in your Feed store
-let filtered = recipes.filter(r => {
-  if (recipeFilter === "hp") return getNutrient(r, "Protein") >= 30;
-  if (recipeFilter === "lc") return getNutrient(r, "Calories") <= 500;
-  if (recipeFilter === "quick") return r.readyInMinutes <= 25;
-  return true;
-});
+  const getNutrient = (r, name) =>
+    r.nutrition?.nutrients?.find((n) => n.name === name)?.amount ?? 0;
 
-    const finalRecipe = filtered.length > 0 
-      ? filtered[Math.floor(Math.random() * filtered.length)] 
-      : null;
-
-    if (finalRecipe) {
-      const prot = Math.round(getNutrient(finalRecipe, "Protein"));
-      const cals = Math.round(getNutrient(finalRecipe, "Calories"));
-      
-      setMessages((prev) => [
-        ...prev,
-        { 
-          from: "bot", 
-          text: `Found one! "${finalRecipe.title}" has ${prot}g protein and ${cals} calories. It only takes ${finalRecipe.readyInMinutes} minutes to make.`, 
-          recipe: finalRecipe 
-        }
-      ]);
-    } else {
-      pushBot("I couldn't find a match! Try scrolling the feed to load more recipes first.");
-    }
-
-    if (opt.next) go(opt.next);
+  if (!recipes || recipes.length === 0) {
+    pushBot("I do not have recipes loaded yet. Go to the feed first so recipes can load, then come back.");
     return;
   }
+
+  let filtered = recipes.filter((r) => {
+    if (recipeFilter === "hp") return getNutrient(r, "Protein") >= 30;
+    if (recipeFilter === "lc") return getNutrient(r, "Calories") <= 500;
+    if (recipeFilter === "quick") return Number(r.readyInMinutes) <= 25;
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    filtered = recipes;
+  }
+
+  const finalRecipe =
+    filtered[Math.floor(Math.random() * filtered.length)];
+
+  const prot = Math.round(getNutrient(finalRecipe, "Protein"));
+  const cals = Math.round(getNutrient(finalRecipe, "Calories"));
+
+  setMessages((prev) => [
+    ...prev,
+    {
+      from: "bot",
+      text: `Found one! "${finalRecipe.title}" has about ${prot}g protein and ${cals} calories. It takes ${finalRecipe.readyInMinutes || "unknown"} minutes to make.`,
+      recipe: finalRecipe,
+    },
+  ]);
+
+  if (opt.next) go(opt.next);
+  return;
 }
+  }
+
   function handleReset() {
     setMessages([
       { from: "bot", text: `Reset. Pick a button and I’ll guide you.` },
@@ -160,6 +168,4 @@ let filtered = recipes.filter(r => {
       </div>
     </div> 
   );
-} 
-
-
+}

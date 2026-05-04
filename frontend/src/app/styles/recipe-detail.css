@@ -248,11 +248,61 @@
   color: #cbd5e1;
   font-size: 0.875rem;
   transition: all 0.2s ease;
+  position:relative;
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
 }
 
-.ingredient-pill:hover {
+/*.ingredient-pill:hover {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(79, 57, 246, 0.3);
+}*/
+.ingredient-pill:hover {
+  transform: translateY(-1px);
+  border-color: #60a5fa;
+  background-color: rgba(96, 165, 250, 0.12);
+}
+
+.ingredient-tooltip {
+  position: absolute;
+  right: 12px;
+  top: -38px;
+
+  background: rgba(17, 24, 39, 0.95);
+  color: white;
+
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+
+  padding: 7px 10px;
+  border-radius: 999px;
+
+  opacity: 0;
+  transform: translateY(6px);
+  pointer-events: none;
+
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+  transition: opacity 0.16s ease, transform 0.16s ease;
+  z-index: 20;
+}
+
+.ingredient-tooltip::after {
+  content: "";
+  position: absolute;
+  right: 18px;
+  bottom: -5px;
+
+  width: 10px;
+  height: 10px;
+
+  background: rgba(17, 24, 39, 0.95);
+  transform: rotate(45deg);
+}
+
+.ingredient-pill:hover .ingredient-tooltip {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* Instructions Section */

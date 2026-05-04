@@ -82,8 +82,11 @@ export default function MacroTokLogin() {
       alert(
         "Account Created!: Your account has been successfully created. You are now signed in.",
       );
+      alert(
+       "Account created! We sent a verification email. You can turn on 2FA later in Settings after verifying your email."
+      );
 
-      navigate("/setup-2fa", { state: { phone } });
+navigate("/feed");
     } catch (error) {
       console.error("Sign up error:", error.code, error.message);
       if (error.code === "auth/email-already-in-use") {

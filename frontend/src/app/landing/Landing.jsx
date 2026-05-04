@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import { Navigation } from "./components/Navigation";
 import { HeroSection } from "./components/HeroSection";
 import { FeaturesSection } from "./components/FeaturesSection";
@@ -7,55 +6,6 @@ import { BenefitsSection } from "./components/BenefitsSection";
 import { CommunityFeedSection } from "./components/CommunityFeedSection";
 import { CTASection } from "./components/CTASection";
 import { Footer } from "./components/Footer";
-=======
-/**
- * Landing.jsx
- * ---------------------------------------------
- * MacroTok — Landing Page Component
- *
- * Features implemented:
- *  1. Hero section with a 5-image auto-slideshow (rotates every 5 seconds)
- *  2. Light/Dark theme toggle with persistent user preference
- *  3. Responsive layout with intro text, feature highlights, and footer
- *  4. Clean, accessible UI (keyboard + hover support)
- * ---------------------------------------------
- */
-
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import "./Landing.css";
-import { auth } from "../../firebaseConfig";
-import { onAuthStateChanged, signOut } from "firebase/auth"
-import { useNavigate } from "react-router-dom";
-
-function AuthButton({ theme }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-    });
-    return unsubscribe;
-  }, []);
-
-  if (loading) return null;
-
-  return !user ? (
-    <button className={`btn btn--outline ${theme === "dark" ? "light" : "dark"}`} onClick={() => navigate("/login")}>
-      Log in
-    </button>
-  ) : (
-    <button
-      className={`btn btn--outline ${theme === "dark" ? "light" : "dark"}`}
-      onClick={() => signOut(auth)}
-    >
-      Log out
-    </button>
-  );
-}
->>>>>>> ca5b7f2 (Andres' Updates NOT DONE)
 
 export default function Landing() {
   return (
