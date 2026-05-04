@@ -8,17 +8,16 @@ import useSettings from "./useSettings";
 import { useUser } from "../../UserContext";
 
 export default function SettingsPage() {
-  // const [state.isDarkMode, setstate.isDarkMode] = useState(false);
-  // state.state.isDarkMode
-  // state.isDarkMode
-
   const {
     user,
     userData,
+    loading,
     updateSettings,
     deleteAccount,
-    loading: userLoading,
+    deactivateAccount,
+    resetPassword,
   } = useUser();
+
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState("profile");
@@ -92,40 +91,45 @@ export default function SettingsPage() {
   };
 
   const handleSendResetLink = async () => {
-    if (!user || !user.email) {
-      alert("Error: User session not found. Please log in again.");
-      return;
-    }
-
+    if (!user || !user.email) return alert("Error: User session not found.");
     try {
-      await sendPasswordResetEmail(auth, user.email);
+      await resetPassword(user.email);
       alert(
         `Check Your Email: A password reset link has been sent to ${user.email}.`,
       );
     } catch (error) {
-      console.error("Password reset error:", error);
-
-      // Friendly error handling
-      if (error.code === "auth/too-many-requests") {
-        alert(
-          "Slow down! You've requested too many emails. Please wait a few minutes.",
-        );
-      } else {
-        alert(`Error: ${error.message}`);
-      }
+      alert(
+        error.code === "auth/too-many-requests"
+          ? "Slow down! Wait a few minutes."
+          : `Error: ${error.message}`,
+      );
     }
   };
 
-  const handleDeactivate = () => {
-    alert(
-      "Account deactivated. You can reactivate anytime by logging back in.",
-    );
-    setShowDeactivateDialog(false);
+  const handleDeactivate = async () => {
+    try {
+      await deactivateAccount();
+      setShowDeactivateDialog(false);
+      alert(
+        "Your account has been deactivated. Log back in anytime to reactivate it.",
+      );
+      await signOut(auth);
+      navigate("/");
+    } catch (error) {
+      alert(`Error: ${error.message}`);
+    }
   };
 
   const handleDelete = async () => {
-    await deleteAccount();
-    setShowDeleteDialog(false);
+    try {
+      await deleteAccount();
+      setShowDeleteDialog(false);
+      navigate("/");
+    } catch (error) {
+      if (error.code === "auth/wrong-password") {
+        alert("Incorrect password. Deletion cancelled.");
+      }
+    }
   };
 
   const handleSignOut = () => {
@@ -190,7 +194,7 @@ export default function SettingsPage() {
   }, [state.isDarkMode]);
 
   // Handle saving profile changes
-  if (userLoading) {
+  if (loading) {
     return (
       <div
         style={{
