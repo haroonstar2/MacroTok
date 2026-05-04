@@ -1,419 +1,528 @@
-import React, { useMemo, useState } from "react";
-import "./global.css";
-import "./calendar.css"
+import React, { useMemo, useState, useEffect, useCallback } from "react";
+import "./calendar.css";
 import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  LayoutGrid,
+  CalendarDays,
+} from "lucide-react";
 
-
+import { db, auth } from "../../startFirebase.js";
+import { getDocs, collection } from "firebase/firestore";
+import { getLikedPostIds } from "../../api/likesApi.js";
+import RecipeCard from "../recipes/RecipeCard";
 
 const today = new Date();
 
-export default function Calendar({ activeDay, onPickDay = () => {} }) {
-  const [monthIndex, setMonthIndex] = useState(today.getMonth());
-  const [year, setYear] = useState(today.getFullYear());
-  const [recipesByDay, setRecipesByDay] = useState({});
-  const [searchResults, setSearchResults] = useState([]);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [recipeInput, setRecipeInput] = useState({
-  name: "",
-  calories: "",
-  protein: "",
-  carbs: "",
-  fat: ""
-});
+const MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-  
-  // Recipe Functions
-  
-const [goalMode, setGoalMode] = useState("deficit"); 
-
-const GOAL_PRESETS = {
-  deficit: 1800,
-  maintenance: 2000,
-  surplus: 2500
+const SLOTS = ["breakfast", "lunch", "dinner"];
+const SLOT_META = {
+  breakfast: {
+    label: "Breakfast",
+    emoji: "🌅",
+    dot: "#f59e0b",
+    bg: "rgba(245,158,11,0.12)",
+    text: "#fcd34d",
+  },
+  lunch: {
+    label: "Lunch",
+    emoji: "☀️",
+    dot: "#10b981",
+    bg: "rgba(16,185,129,0.12)",
+    text: "#6ee7b7",
+  },
+  dinner: {
+    label: "Dinner",
+    emoji: "🌙",
+    dot: "#818cf8",
+    bg: "rgba(129,140,248,0.12)",
+    text: "#a5b4fc",
+  },
 };
 
- async function searchRecipes(query) {
-  if (!query || query.length < 2) return [];
-  const url = `https://api.spoonacular.com/recipes/complexSearch?query=${query}&number=10&addRecipeNutrition=true&apiKey=${import.meta.env.VITE_SPOON_API_KEY}`;
-  try {
-    const res = await fetch(url);
-    const data = await res.json();
-    return data.results || [];
-  } catch (err) {
-    console.error("Spoonacular error:", err);
-    return [];
-  }
+const GOAL_PRESETS = { deficit: 1800, maintenance: 2000, surplus: 2500 };
+
+function fmtKey(y, m, d) {
+  return `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
 
-function extractNutrition(recipe) { //returns macros
-  const calories = Math.round(
-    recipe.nutrition?.nutrients?.find(n => n.name === "Calories")?.amount ?? 0
+function getNutrient(r, name) {
+  return Number(
+    r[name.toLowerCase()] ||
+      r.nutrition?.nutrients?.find((n) => n.name === name)?.amount ||
+      0,
   );
-  const protein = recipe.nutrition?.nutrients?.find(n => n.name === "Protein")?.amount ?? 0;
-  const carbs = recipe.nutrition?.nutrients?.find(n => n.name === "Carbohydrates")?.amount ?? 0;
-  const fat = recipe.nutrition?.nutrients?.find(n => n.name === "Fat")?.amount ?? 0;
-  return { calories, protein, carbs, fat };
 }
 
-function selectRecipe(recipe) {
-  const { calories, protein, carbs, fat } = extractNutrition(recipe);
-
-  setRecipeInput({
-    name: recipe.title,
-    calories,
-    protein,
-    carbs,
-    fat
-  });
-
-  setSearchResults([]); // hide search results
-}
-
-  function addRecipe(day, recipe) {
-    setRecipesByDay(prev => {
-      const dayRecipes = prev[day] || [];
-
-      if (dayRecipes.length >= 3) {
-        alert("You can only add up to 3 recipes per day.");
-        return prev;
-      }
-
-      return {
-        ...prev,
-        [day]: [...dayRecipes, recipe]
-      };
-    });
-  }
-
-  function getDailyTotals(day) {
-  const dayRecipes = recipesByDay[day] || [];
-
-  return dayRecipes.reduce(
-    (sum, r) => ({
-      calories: sum.calories + Number(r.calories || 0),
-      protein: sum.protein + Number(r.protein || 0),
-      carbs: sum.carbs + Number(r.carbs || 0),
-      fat: sum.fat + Number(r.fat || 0),
+function calcTotals(meals) {
+  const all = [
+    ...(meals.breakfast || []),
+    ...(meals.lunch || []),
+    ...(meals.dinner || []),
+  ];
+  return all.reduce(
+    (s, r) => ({
+      calories: s.calories + getNutrient(r, "Calories"),
+      protein: s.protein + getNutrient(r, "Protein"),
+      carbs: s.carbs + getNutrient(r, "Carbohydrates"),
+      fat: s.fat + (getNutrient(r, "Fat") || getNutrient(r, "fats")),
     }),
-    { calories: 0, protein: 0, carbs: 0, fat: 0 }
+    { calories: 0, protein: 0, carbs: 0, fat: 0 },
   );
 }
 
+export default function Calendar({ activeDay, onPickDay = () => {} }) {
+  const [view, setView] = useState("month");
+  const [monthIdx, setMonthIdx] = useState(today.getMonth());
+  const [year, setYear] = useState(today.getFullYear());
+  const [selDay, setSelDay] = useState(activeDay || today.getDate());
+  const [calData, setCalData] = useState({}); // dateKey → {breakfast,lunch,dinner}
+  const [likedIds, setLikedIds] = useState([]);
+  const [goalMode, setGoalMode] = useState("maintenance");
 
-  function editRecipe(day, index, newRecipe) {
-    setRecipesByDay(prev => {
-      const dayRecipes = prev[day] || [];
-      dayRecipes[index] = { ...dayRecipes[index], ...newRecipe };
-      return {
-        ...prev,
-        [day]: [...dayRecipes]
-      };
-    });
-  }
+  // Fetch all liked IDs once
+  useEffect(() => {
+    getLikedPostIds()
+      .then((ids) => setLikedIds(ids.map(String)))
+      .catch(console.error);
+  }, []);
 
-  function removeRecipe(day, index) {
-    setRecipesByDay(prev => {
-      const updated = (prev[day] || []).filter((_, i) => i !== index);
-      const result = { ...prev };
-      if (updated.length === 0) delete result[day];
-      else result[day] = updated;
-      return result;
-    });
-  }
+  // Fetch entire calendar collection
+  const fetchAll = useCallback(async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+      const snap = await getDocs(collection(db, "users", user.uid, "calendar"));
+      const data = {};
+      snap.forEach((doc) => {
+        const d = doc.data();
+        data[doc.id] = {
+          breakfast: d.breakfast || [],
+          lunch: d.lunch || [],
+          dinner: d.dinner || [],
+        };
+      });
+      setCalData(data);
+    } catch (err) {
+      console.error("Calendar fetch error:", err);
+    }
+  }, []);
 
-  // Calendar Math
+  useEffect(() => {
+    fetchAll();
+  }, [fetchAll]);
+
+  // Derived
+  const selDateKey = fmtKey(year, monthIdx, selDay);
+  const dayMeals = calData[selDateKey] || {
+    breakfast: [],
+    lunch: [],
+    dinner: [],
+  };
+  const totals = useMemo(() => calcTotals(dayMeals), [dayMeals]);
+  const calGoal = GOAL_PRESETS[goalMode];
+  const progress = Math.min(100, Math.round((totals.calories / calGoal) * 100));
+
+  // Month grid
   const daysInMonth = useMemo(
-    () => new Date(year, monthIndex + 1, 0).getDate(),
-    [year, monthIndex]
+    () => new Date(year, monthIdx + 1, 0).getDate(),
+    [year, monthIdx],
   );
-
   const firstWeekday = useMemo(
-    () => new Date(year, monthIndex, 1).getDay(),
-    [year, monthIndex]
+    () => new Date(year, monthIdx, 1).getDay(),
+    [year, monthIdx],
   );
-
   const monthGrid = useMemo(() => {
-    const cells = [];
-    for (let i = 0; i < firstWeekday; i++) cells.push(null);
+    const cells = Array(firstWeekday).fill(null);
     for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+    while (cells.length % 7) cells.push(null);
     return cells;
   }, [daysInMonth, firstWeekday]);
 
-  const MONTHS = [
-    "January","February","March","April","May","June",
-    "July","August","September","October","November","December",
-  ];
+  // Week dates (Sun–Sat containing selDay)
+  const weekDates = useMemo(() => {
+    const base = new Date(year, monthIdx, selDay);
+    const dow = base.getDay();
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(base);
+      d.setDate(base.getDate() - dow + i);
+      return d;
+    });
+  }, [year, monthIdx, selDay]);
 
-function formatFullDate(day) {
-  return `${MONTHS[monthIndex]} ${day}`;
-}
+  function pickDay(d, m = monthIdx, y2 = year) {
+    setSelDay(d);
+    setMonthIdx(m);
+    setYear(y2);
+    onPickDay(d);
+  }
 
-
-  const WEEKDAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-
-  function prevMonth() {
-    if (monthIndex === 0) {
-      setMonthIndex(11);
-      setYear(y => y - 1);
+  function prevPeriod() {
+    if (view === "month") {
+      if (monthIdx === 0) {
+        setMonthIdx(11);
+        setYear((y) => y - 1);
+      } else setMonthIdx((m) => m - 1);
     } else {
-      setMonthIndex(m => m - 1);
+      const d = new Date(year, monthIdx, selDay - 7);
+      pickDay(d.getDate(), d.getMonth(), d.getFullYear());
     }
   }
 
-  function nextMonth() {
-    if (monthIndex === 11) {
-      setMonthIndex(0);
-      setYear(y => y + 1);
+  function nextPeriod() {
+    if (view === "month") {
+      if (monthIdx === 11) {
+        setMonthIdx(0);
+        setYear((y) => y + 1);
+      } else setMonthIdx((m) => m + 1);
     } else {
-      setMonthIndex(m => m + 1);
+      const d = new Date(year, monthIdx, selDay + 7);
+      pickDay(d.getDate(), d.getMonth(), d.getFullYear());
     }
   }
 
-  function isToday(d) {
+  function isToday(date) {
     return (
-      today.getFullYear() === year &&
-      today.getMonth() === monthIndex &&
-      today.getDate() === d
+      date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear()
     );
   }
-  const totals = getDailyTotals(activeDay);
-  const dayRecipes = recipesByDay[activeDay] || [];
 
+  function mealDots(dateKey) {
+    return SLOTS.filter((s) => (calData[dateKey]?.[s]?.length || 0) > 0);
+  }
 
-  // RENDER
+  const periodTitle =
+    view === "month"
+      ? `${MONTHS[monthIdx]} ${year}`
+      : `${weekDates[0].toLocaleDateString("en-US", { month: "short", day: "numeric" })} – ${weekDates[6].toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`;
+
   return (
-    <div className="cal-card">
-
-      {/* Header */}
-      <div className="cal-header">
-        <div className="cal-header-left">
-          <button className="cal-icon-btn" onClick={prevMonth}>
-            <ChevronLeft />
+    <div className="cal-page">
+      {/* ── TOP HEADER ── */}
+      <div className="cal-top-header">
+        <div className="cal-nav">
+          <button className="cal-nav-btn" onClick={prevPeriod}>
+            <ChevronLeft size={16} />
           </button>
-
-          <h2 className="cal-title">
-            {MONTHS[monthIndex]} {year}
-          </h2>
-
-          <button className="cal-icon-btn" onClick={nextMonth}>
-            <ChevronRight />
+          <h2 className="cal-period-title">{periodTitle}</h2>
+          <button className="cal-nav-btn" onClick={nextPeriod}>
+            <ChevronRight size={16} />
           </button>
         </div>
-
-        <button className="cal-primary" onClick={() => setShowAddModal(true)}>
-          <Plus size={16} /> Add Recipe
-        </button>
+        <div className="cal-view-toggle">
+          <button
+            className={`view-btn ${view === "month" ? "active" : ""}`}
+            onClick={() => setView("month")}
+          >
+            <LayoutGrid size={14} /> Month
+          </button>
+          <button
+            className={`view-btn ${view === "week" ? "active" : ""}`}
+            onClick={() => setView("week")}
+          >
+            <CalendarDays size={14} /> Week
+          </button>
+        </div>
       </div>
 
-      {/* Grid */}
-      <div className="cal-grid cal-weekdays">
-        {WEEKDAYS.map(d => (
-          <div key={d} className="cal-weekday">{d}</div>
-        ))}
-
-        {monthGrid.map((d, i) => {
-          if (d === null)
-            return <div key={i} className="cal-day cal-day-empty"></div>;
-
-          const selected = d === activeDay;
-          const dots = recipesByDay[d] || [];
-
-          return (
-            <motion.button
-              key={i}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              className={`cal-day ${selected ? "cal-day-selected" : ""} ${
-                isToday(d) && !selected ? "cal-day-today" : ""
-              }`}
-              onClick={() => onPickDay(d)}
-            >
-              <div className="day-number">{d}</div>
-
-              <div className="dots">
-                {dots.map((_, i) => (
-                  <span key={i} className="dot" />
+      {/* ── BODY ── */}
+      <div className="cal-body">
+        {/* ════ MONTH VIEW ════ */}
+        {view === "month" && (
+          <>
+            <div className="cal-main-panel">
+              <div className="cal-month-grid">
+                {WEEKDAYS.map((d) => (
+                  <div key={d} className="cal-weekday-hdr">
+                    {d}
+                  </div>
                 ))}
+                {monthGrid.map((d, i) => {
+                  if (!d)
+                    return <div key={i} className="cal-cell cal-cell-empty" />;
+                  const dk = fmtKey(year, monthIdx, d);
+                  const dots = mealDots(dk);
+                  const selected = d === selDay;
+                  const isT =
+                    today.getDate() === d &&
+                    today.getMonth() === monthIdx &&
+                    today.getFullYear() === year;
+                  return (
+                    <motion.button
+                      key={i}
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      className={`cal-cell ${selected ? "selected" : ""} ${isT ? "today" : ""}`}
+                      onClick={() => pickDay(d)}
+                    >
+                      <span
+                        className={`cal-cell-num ${isT ? "today-num" : ""}`}
+                      >
+                        {d}
+                      </span>
+                      {dots.length > 0 && (
+                        <div className="cal-dots">
+                          {dots.map((s) => (
+                            <span
+                              key={s}
+                              className="cal-dot"
+                              style={{ background: SLOT_META[s].dot }}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </motion.button>
+                  );
+                })}
               </div>
-            </motion.button>
-          );
-        })}
+            </div>
+
+            {/* Month → right sidebar */}
+            <DaySidebar
+              dateLabel={`${MONTHS[monthIdx]} ${selDay}, ${year}`}
+              dayMeals={dayMeals}
+              totals={totals}
+              calGoal={calGoal}
+              progress={progress}
+              goalMode={goalMode}
+              setGoalMode={setGoalMode}
+              selDateKey={selDateKey}
+              likedIds={likedIds}
+              onRemove={fetchAll}
+            />
+          </>
+        )}
+
+        {/* ════ WEEK VIEW ════ */}
+        {view === "week" && (
+          <div className="cal-week-view">
+            {/* Header row */}
+            <div className="week-header-row">
+              <div className="week-slot-spacer" />
+              {weekDates.map((date, i) => {
+                const isT = isToday(date);
+                const isSel =
+                  date.getDate() === selDay &&
+                  date.getMonth() === monthIdx &&
+                  date.getFullYear() === year;
+                return (
+                  <div
+                    key={i}
+                    className={`week-day-hdr ${isSel ? "selected" : ""} ${isT ? "today" : ""}`}
+                    onClick={() =>
+                      pickDay(
+                        date.getDate(),
+                        date.getMonth(),
+                        date.getFullYear(),
+                      )
+                    }
+                  >
+                    <span className="week-day-name">
+                      {WEEKDAYS[date.getDay()]}
+                    </span>
+                    <span className={`week-day-num ${isT ? "today-num" : ""}`}>
+                      {date.getDate()}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* One row per slot */}
+            {SLOTS.map((slot) => (
+              <div key={slot} className="week-slot-row">
+                <div
+                  className="week-slot-label"
+                  style={{ color: SLOT_META[slot].dot }}
+                >
+                  <span>{SLOT_META[slot].emoji}</span>
+                  <span>{SLOT_META[slot].label}</span>
+                </div>
+                {weekDates.map((date, i) => {
+                  const dk = fmtKey(
+                    date.getFullYear(),
+                    date.getMonth(),
+                    date.getDate(),
+                  );
+                  const recipes = calData[dk]?.[slot] || [];
+                  const isSel =
+                    date.getDate() === selDay &&
+                    date.getMonth() === monthIdx &&
+                    date.getFullYear() === year;
+                  return (
+                    <div
+                      key={i}
+                      className={`week-cell ${isSel ? "selected" : ""}`}
+                      onClick={() =>
+                        pickDay(
+                          date.getDate(),
+                          date.getMonth(),
+                          date.getFullYear(),
+                        )
+                      }
+                    >
+                      {recipes.length > 0 ? (
+                        recipes.map((r) => (
+                          <div
+                            key={r.id}
+                            className="week-recipe-chip"
+                            style={{
+                              borderLeftColor: SLOT_META[slot].dot,
+                              background: SLOT_META[slot].bg,
+                            }}
+                          >
+                            {r.image && (
+                              <img
+                                src={r.image}
+                                alt=""
+                                className="week-chip-img"
+                                onError={(e) =>
+                                  (e.target.style.display = "none")
+                                }
+                              />
+                            )}
+                            <span
+                              className="week-chip-name"
+                              style={{ color: SLOT_META[slot].text }}
+                            >
+                              {r.title}
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="week-cell-empty">—</div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+
+            {/* Summary strip below week grid */}
+            <div className="week-summary-strip">
+              <DaySidebar
+                dateLabel={`${MONTHS[monthIdx]} ${selDay}, ${year}`}
+                dayMeals={dayMeals}
+                totals={totals}
+                calGoal={calGoal}
+                progress={progress}
+                goalMode={goalMode}
+                setGoalMode={setGoalMode}
+                selDateKey={selDateKey}
+                likedIds={likedIds}
+                onRemove={fetchAll}
+                inline
+              />
+            </div>
+          </div>
+        )}
       </div>
-      {showAddModal && (
-  <div className="modal-overlay">
-    <div className="modal">
-      <h3>Add Recipe for {formatFullDate(activeDay)}</h3>
-
-
-      <input
-  placeholder="Search recipe..."
-  value={recipeInput.name}
-  onChange={async (e) => {
-    const q = e.target.value;
-    setRecipeInput({ ...recipeInput, name: q });
-
-    const results = await searchRecipes(q);
-    setSearchResults(results);
-  }}
-/>
-
-<div className="search-results">
-  {searchResults.map(r => (
-    <div 
-      key={r.id}
-      className="search-item"
-      onClick={() => selectRecipe(r)}
-    >
-      {r.title}
     </div>
-  ))}
-</div>
+  );
+}
 
-{/* Display selected recipe macros */}
-{recipeInput.name && (
-  <div className="macro-box">
-    <div><strong>Calories:</strong> {recipeInput.calories}</div>
-    <div><strong>Protein:</strong> {recipeInput.protein} g</div>
-    <div><strong>Carbs:</strong> {recipeInput.carbs} g</div>
-    <div><strong>Fat:</strong> {recipeInput.fat} g</div>
-  </div>
-)}
+/* ── Day Detail Sidebar ── */
+function DaySidebar({
+  dateLabel,
+  dayMeals,
+  totals,
+  calGoal,
+  progress,
+  goalMode,
+  setGoalMode,
+  selDateKey,
+  likedIds,
+  onRemove,
+  inline,
+}) {
+  return (
+    <div className={inline ? "day-sidebar day-sidebar-inline" : "day-sidebar"}>
+      <div className="sidebar-hdr">
+        <h3 className="sidebar-date">{dateLabel}</h3>
+        <span className="sidebar-kcal">{Math.round(totals.calories)} kcal</span>
+      </div>
 
-
-      <button
-        className="cal-primary"
-        onClick={() => {
-          // save recipe
-          addRecipe(activeDay, recipeInput);
-
-          // close modal
-          setShowAddModal(false);
-
-          // reset inputs
-          setRecipeInput({
-            name: "",
-            calories: "",
-            protein: "",
-            carbs: "",
-            fat: ""
-          });
-        }}
-      >
-        Save Recipe
-      </button>
-
-      <button className="cal-btn" onClick={() => setShowAddModal(false)}>
-        Cancel
-      </button>
-    </div>
-  </div>
-)}
-
-
-{activeDay && dayRecipes.length > 0 && (
-  <div className="day-summary-box">
-    {dayRecipes.map((r, index) => (
-      <div key={index} className="summary-recipe">
-        <strong>{r.name}</strong>
-        <div className="summary-macros">
-          <span>{Math.round(r.calories)} cal</span>
-          <span>{Math.round(r.protein)}g protein</span>
-          <span>{Math.round(r.carbs)}g carbs</span>
-          <span>{Math.round(r.fat)}g fat</span>
+      {/* Progress */}
+      <div className="sidebar-progress-box">
+        <div className="progress-top-row">
+          <span className="progress-label">Daily Goal</span>
+          <div className="goal-chips">
+            {Object.keys(GOAL_PRESETS).map((m) => (
+              <button
+                key={m}
+                className={`goal-chip ${goalMode === m ? "active" : ""}`}
+                onClick={() => setGoalMode(m)}
+              >
+                {m.charAt(0).toUpperCase() + m.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="progress-bar-track">
+          <div
+            className="progress-bar-fill"
+            style={{
+              width: `${progress}%`,
+              background: progress >= 100 ? "#ef4444" : "#4f39f6",
+            }}
+          />
+        </div>
+        <p className="progress-text">
+          {Math.round(totals.calories)} / {calGoal} kcal · {progress}%
+        </p>
+        <div className="macro-pills">
+          <span className="mpill mpill-p">P {Math.round(totals.protein)}g</span>
+          <span className="mpill mpill-c">C {Math.round(totals.carbs)}g</span>
+          <span className="mpill mpill-f">F {Math.round(totals.fat)}g</span>
         </div>
       </div>
-    ))}
-    
-<div className="summary-totals">
-  <strong>Daily Total</strong>
 
-  <div className="summary-macros">
-    <span>{totals.calories} cal</span>
-    <span>{Math.round(totals.protein)}g protein</span>
-    <span>{Math.round(totals.carbs)}g carbs</span>
-    <span>{Math.round(totals.fat)}g fat</span>
-  </div>
-</div>
-
-
-  </div>
-)}
-
-
-{activeDay && (
-  <div className="macro-summary-card">
-    <h3 className="macro-summary-title">
-      Daily Macros • {formatFullDate(activeDay)}
-    </h3>
-
-    <div className="daily-intake-box">
-  <h3>Daily Intake</h3>
-
-  <div className="daily-kcals">
-    <strong>{totals.calories}</strong> / {GOAL_PRESETS[goalMode]} kcal
-  </div>
-
-  {/* Progress bar from goals.jsx */}
-<div className="goal-bar">
-  <div
-    className="goal-bar-fill"
-    style={{
-      width: `${Math.min(
-        100,
-        Math.round((totals.calories / GOAL_PRESETS[goalMode]) * 100)
-      )}%`,
-      background:
-        totals.calories < GOAL_PRESETS[goalMode] ? "#16a34a" : "#dc2626",
-      transition: "width 0.4s ease, background 0.4s ease",
-    }}
-  />
-</div>
-
-  <div className="goal-status">
-  {totals.calories < GOAL_PRESETS[goalMode] &&
-    `Deficit ${GOAL_PRESETS[goalMode] - totals.calories} kcal`}
-
-  {totals.calories === GOAL_PRESETS[goalMode] &&
-    "On Target"}
-
-  {totals.calories > GOAL_PRESETS[goalMode] &&
-    `Surplus ${totals.calories - GOAL_PRESETS[goalMode]} kcal`}
-</div>
-
-
-  <div className="goal-selector">
-    <button 
-      className={goalMode === "deficit" ? "active" : ""}
-      onClick={() => setGoalMode("deficit")}
-    >
-      Deficit
-    </button>
-
-    <button 
-      className={goalMode === "maintenance" ? "active" : ""}
-      onClick={() => setGoalMode("maintenance")}
-    >
-      Maintenance
-    </button>
-
-    <button 
-      className={goalMode === "surplus" ? "active" : ""}
-      onClick={() => setGoalMode("surplus")}
-    >
-      Surplus
-    </button>
-  </div>
-</div>
-    <div className="meal-breakdown">
-  Total: {Math.round(totals.calories)} kcal ·
-  Protein: {Math.round(totals.protein)}g ·
-  Carbs: {Math.round(totals.carbs)}g ·
-  Fat: {Math.round(totals.fat)}g
-</div>
-
-  </div>
-)}
+      {/* Meal slots */}
+      <div className="sidebar-slots">
+        {SLOTS.map((slot) => (
+          <div key={slot} className="sidebar-slot">
+            <div
+              className="sidebar-slot-label"
+              style={{ color: SLOT_META[slot].dot }}
+            >
+              {SLOT_META[slot].emoji} {SLOT_META[slot].label}
+            </div>
+            {(dayMeals[slot] || []).length > 0 ? (
+              dayMeals[slot].map((r) => (
+                <RecipeCard
+                  key={`${slot}-${r.id}`}
+                  recipe={r}
+                  initiallyLiked={likedIds.includes(String(r.id))}
+                  initiallyScheduled={true}
+                  scheduledDate={selDateKey}
+                  scheduledSlot={slot}
+                  onRemove={onRemove}
+                />
+              ))
+            ) : (
+              <div className="slot-empty-msg">No meals planned</div>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

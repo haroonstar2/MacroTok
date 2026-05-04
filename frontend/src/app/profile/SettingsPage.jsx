@@ -1,330 +1,724 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { auth } from "../../startFirebase";
+
+import {
+  sendPasswordResetEmail,
+  signOut,
+  sendEmailVerification,
+  RecaptchaVerifier,
+  multiFactor,
+  PhoneAuthProvider,
+  PhoneMultiFactorGenerator,
+} from "firebase/auth";
+import useSettings from "./useSettings";
+import { useUser } from "../../UserContext";
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState('profile');
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [username, setUsername] = useState('@johndoe');
-  const [bio, setBio] = useState('');
-  const [fitnessGoal, setFitnessGoal] = useState('lose_weight');
-  const [desiredWeight, setDesiredWeight] = useState('');
-  const [email, setEmail] = useState('john.doe@example.com');
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showDeactivateDialog, setShowDeactivateDialog] = useState(false);
+  const {
+    user,
+    userData,
+    loading,
+    updateSettings,
+    deleteAccount,
+    deactivateAccount,
+    resetPassword,
+  } = useUser();
 
   const navigate = useNavigate();
 
-  const handleSaveProfile = () => {
-    alert('Profile updated successfully!');
+  const [activeTab, setActiveTab] = useState("profile");
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showDeactivateDialog, setShowDeactivateDialog] = useState(false);
+  const [show2FASetup, setShow2FASetup] = useState(false);
+  const [twoFAPhone, setTwoFAPhone] = useState("");
+  const [twoFACode, setTwoFACode] = useState("");
+  const [verificationId, setVerificationId] = useState("");
+  const [sending2FA, setSending2FA] = useState(false);
+  const [verifying2FA, setVerifying2FA] = useState(false);
+  // Profile picture
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
+
+  // Pass the Firebase data into the useSettings hook
+  const { state, setters } = useSettings(userData?.settings || {});
+
+  console.log("yo", state.isDarkMode);
+
+  useEffect(() => {
+    if (userData?.settings?.photoURL) {
+      setters.setPhotoURL(userData.settings.photoURL);
+    }
+  }, [userData]);
+
+  const handleSaveProfile = async () => {
+    try {
+      await updateSettings({
+        ...state,
+        ...(state.photoURL ? { photoURL: state.photoURL } : {}),
+      });
+      alert("Profile updated successfully!");
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      alert("Failed to update profile.");
+    }
   };
 
-  const handleSendResetLink = () => {
-    alert('Password reset link sent! Check your email. The link will expire in 20 minutes.');
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
+    if (!allowedTypes.includes(file.type)) {
+      alert("Only JPG, PNG or GIF files are allowed.");
+      return;
+    }
+    if (file.size > 500 * 1024) {
+      alert("File must be smaller than 500KB.");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      // Convert image to base64
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      // Update UI immediately
+      setters.setPhotoURL(base64);
+
+      // Save base64 string directly to Firestore
+      await updateSettings({ photoURL: base64 });
+    } catch (err) {
+      console.error("Photo upload failed:", err);
+      alert("Failed to upload photo. Please try again.");
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
   };
 
-  const handleDeactivate = () => {
-    alert('Account deactivated. You can reactivate anytime by logging back in.');
-    setShowDeactivateDialog(false);
+  const handleSendResetLink = async () => {
+    if (!user || !user.email) return alert("Error: User session not found.");
+    try {
+      await resetPassword(user.email);
+      alert(
+        `Check Your Email: A password reset link has been sent to ${user.email}.`,
+      );
+    } catch (error) {
+      alert(
+        error.code === "auth/too-many-requests"
+          ? "Slow down! Wait a few minutes."
+          : `Error: ${error.message}`,
+      );
+    }
   };
 
-  const handleDelete = () => {
-    alert('Account permanently deleted. We\'re sad to see you go.');
-    setShowDeleteDialog(false);
+  const handleDeactivate = async () => {
+    try {
+      await deactivateAccount();
+      setShowDeactivateDialog(false);
+      alert(
+        "Your account has been deactivated. Log back in anytime to reactivate it.",
+      );
+      await signOut(auth);
+      navigate("/");
+    } catch (error) {
+      alert(`Error: ${error.message}`);
+    }
   };
-  
-useEffect(() => {
-  // Remove default body margin and set background to match the app
-  document.body.style.margin = '0';
-  document.body.style.backgroundColor = isDarkMode ? '#0f172b' : '#f8fafc';
 
-  // Optional: make sure the html element also matches
-  document.documentElement.style.backgroundColor = isDarkMode ? '#0f172b' : '#f8fafc';
-
-  // Cleanup when this component unmounts
-  return () => {
-    document.body.style.margin = '';
-    document.body.style.backgroundColor = '';
-    document.documentElement.style.backgroundColor = '';
+  const handleDelete = async () => {
+    try {
+      await deleteAccount();
+      setShowDeleteDialog(false);
+      navigate("/");
+    } catch (error) {
+      if (error.code === "auth/wrong-password") {
+        alert("Incorrect password. Deletion cancelled.");
+      }
+    }
   };
-}, [isDarkMode]);
+
+  const handleSend2FACode = async () => {
+  if (!user) {
+    alert("Please sign in first.");
+    return;
+  }
+
+  if (!twoFAPhone) {
+    alert("Please enter a phone number in this format: +15555555555");
+    return;
+  }
+
+  try {
+    setSending2FA(true);
+
+    await user.reload();
+
+    if (!user.emailVerified) {
+      await sendEmailVerification(user);
+      alert(
+        "Please verify your email before turning on 2FA. We sent a verification email."
+      );
+      return;
+    }
+
+    if (window.recaptchaVerifier) {
+      window.recaptchaVerifier.clear();
+    }
+
+    window.recaptchaVerifier = new RecaptchaVerifier(
+      auth,
+      "recaptcha-container",
+      {
+        size: "invisible",
+      }
+    );
+
+    const session = await multiFactor(user).getSession();
+
+    const phoneInfoOptions = {
+      phoneNumber: twoFAPhone,
+      session,
+    };
+
+    const phoneProvider = new PhoneAuthProvider(auth);
+
+    const id = await phoneProvider.verifyPhoneNumber(
+      phoneInfoOptions,
+      window.recaptchaVerifier
+    );
+
+    setVerificationId(id);
+    alert("SMS code sent.");
+  } catch (error) {
+    console.error("Send 2FA code error:", error);
+    if (error.code === "auth/requires-recent-login") {
+    alert("For security, please sign in again before adding 2FA.");
+  } else {
+    alert(error.message);
+  }
+  } finally {
+    setSending2FA(false);
+  }
+};
+
+const handleVerifyAndEnable2FA = async () => {
+  if (!user) {
+    alert("Please sign in first.");
+    return;
+  }
+
+  if (!verificationId || !twoFACode) {
+    alert("Please enter the SMS code.");
+    return;
+  }
+
+  try {
+    setVerifying2FA(true);
+
+    const phoneCredential = PhoneAuthProvider.credential(
+      verificationId,
+      twoFACode
+    );
+
+    const assertion = PhoneMultiFactorGenerator.assertion(phoneCredential);
+
+    await multiFactor(user).enroll(assertion, "Phone number");
+
+    alert("Phone 2FA has been enabled.");
+    setShow2FASetup(false);
+    setTwoFAPhone("");
+    setTwoFACode("");
+    setVerificationId("");
+  } catch (error) {
+    console.error("Enable 2FA error:", error);
+    alert(error.message);
+  } finally {
+    setVerifying2FA(false);
+  }
+};
+  const handleSignOut = () => {
+    // Sign out of Firebase
+    signOut(auth);
+
+    alert("You have been signed out.");
+
+    navigate("/");
+  };
+
+  const handleSettingsToggle = async (settingKey, currentValue) => {
+    const newValue = !currentValue;
+
+    // if (settingKey === "state.isDarkMode") setstate.isDarkMode(newValue);
+
+    console.log(
+      `set${settingKey.charAt(0).toUpperCase() + settingKey.slice(1)}`,
+    );
+
+    // Just turns something like username to setUsername and applies the new value
+    setters[`set${settingKey.charAt(0).toUpperCase() + settingKey.slice(1)}`](
+      newValue,
+    );
+
+    try {
+      // Update firebase via context
+      await updateSettings({
+        [settingKey]: newValue,
+      });
+      console.log(`${settingKey} updated to ${newValue}`);
+    } catch (error) {
+      console.error("Update failed:", error);
+      alert("Failed to save preference. Please try again.");
+
+      // Rollback the value to the previous state on failure
+      setters[`set${settingKey.charAt(0).toUpperCase() + settingKey.slice(1)}`](
+        currentValue,
+      );
+      if (settingKey === "state.isDarkMode") setstate.isDarkMode(currentValue);
+    }
+  };
+
+  useEffect(() => {
+    // Remove default body margin and set background to match the app
+    document.body.style.margin = "0";
+    document.body.style.backgroundColor = state.isDarkMode
+      ? "#0f172b"
+      : "#f8fafc";
+
+    // Optional: make sure the html element also matches
+    document.documentElement.style.backgroundColor = state.isDarkMode
+      ? "#0f172b"
+      : "#f8fafc";
+
+    // Cleanup when this component unmounts
+    return () => {
+      document.body.style.margin = "";
+      document.body.style.backgroundColor = "";
+      document.documentElement.style.backgroundColor = "";
+    };
+  }, [state.isDarkMode]);
+
+  // Handle saving profile changes
+  if (loading) {
+    return (
+      <div
+        style={{
+          height: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#0f172b",
+          color: "white",
+        }}
+      >
+        Loading your settings...
+      </div>
+    );
+  }
 
   return (
-    <div className={isDarkMode ? 'dark' : ''}>
-      <div style={{ minHeight: '100vh', backgroundColor: isDarkMode ? '#0f172b' : '#f8fafc' }}>
+    <div className={state.isDarkMode ? "dark" : ""}>
+      <div
+        style={{
+          minHeight: "100vh",
+          backgroundColor: state.isDarkMode ? "#0f172b" : "#f8fafc",
+        }}
+      >
         {/* Header */}
-        <div style={{
-          backgroundColor: '#0f172b',
-          borderBottom: '1px solid #1d293d',
-          padding: '24px 32px'
-        }}>
-          <div style={{
-            maxWidth: '1200px',
-            margin: '0 auto',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{
-                width: '0px',
-                height: '40px',
-                backgroundColor: '#4f39f6',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '24px'
-              }}>
-              </div>
-              <span 
-                style={{ color: 'white', fontSize: '24px', fontWeight: '600' }}
-                onClick={() => navigate("/feed")}>MacroTok</span>
+        <div
+          style={{
+            backgroundColor: "#0f172b",
+            borderBottom: "1px solid #1d293d",
+            padding: "24px 32px",
+          }}
+        >
+          <div
+            style={{
+              maxWidth: "1200px",
+              margin: "0 auto",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div
+                style={{
+                  width: "0px",
+                  height: "40px",
+                  backgroundColor: "#4f39f6",
+                  borderRadius: "8px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "24px",
+                }}
+              ></div>
+              <span
+                style={{ color: "white", fontSize: "24px", fontWeight: "600" }}
+                onClick={() => navigate("/feed")}
+              >
+                MacroTok
+              </span>
             </div>
-            <button style={{
-              padding: '8px 16px',
-              backgroundColor: 'transparent',
-              color: '#90a1b9',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-               Sign Out
+            <button
+              style={{
+                padding: "8px 16px",
+                backgroundColor: "transparent",
+                color: "#90a1b9",
+                border: "none",
+                borderRadius: "6px",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+              onClick={handleSignOut}
+            >
+              Sign Out
             </button>
           </div>
         </div>
 
         {/* Main Content */}
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '48px 32px' }}>
-          <h1 style={{ 
-            fontSize: '32px', 
-            fontWeight: '600', 
-            marginBottom: '8px',
-            color: isDarkMode ? 'white' : '#0f172b'
-          }}>
+        <div
+          style={{ maxWidth: "1200px", margin: "0 auto", padding: "48px 32px" }}
+        >
+          <h1
+            style={{
+              fontSize: "32px",
+              fontWeight: "600",
+              marginBottom: "8px",
+              color: state.isDarkMode ? "white" : "#0f172b",
+            }}
+          >
             Settings
           </h1>
-          <p style={{ 
-            fontSize: '16px', 
-            color: isDarkMode ? '#90a1b9' : '#45556c',
-            marginBottom: '32px'
-          }}>
+          <p
+            style={{
+              fontSize: "16px",
+              color: state.isDarkMode ? "#90a1b9" : "#45556c",
+              marginBottom: "32px",
+            }}
+          >
             Manage your account settings and preferences
           </p>
 
           {/* Tabs */}
-          <div style={{
-            display: 'flex',
-            gap: '16px',
-            borderBottom: `1px solid ${isDarkMode ? '#45556c' : '#e2e8f0'}`,
-            marginBottom: '32px'
-          }}>
-            {['profile', 'security', 'preferences', 'privacy', 'account'].map(tab => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                style={{
-                  padding: '12px 24px',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  borderBottom: activeTab === tab ? '2px solid #4f39f6' : '2px solid transparent',
-                  color: activeTab === tab 
-                    ? (isDarkMode ? 'white' : '#0f172b')
-                    : (isDarkMode ? '#90a1b9' : '#45556c'),
-                  cursor: 'pointer',
-                  fontSize: '16px',
-                  fontWeight: activeTab === tab ? '600' : '400',
-                  textTransform: 'capitalize'
-                }}
-              >
-                {tab}
-              </button>
-            ))}
+          <div
+            style={{
+              display: "flex",
+              gap: "16px",
+              borderBottom: `1px solid ${state.isDarkMode ? "#45556c" : "#e2e8f0"}`,
+              marginBottom: "32px",
+            }}
+          >
+            {["profile", "security", "preferences", "privacy", "account"].map(
+              (tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  style={{
+                    padding: "12px 24px",
+                    backgroundColor: "transparent",
+                    border: "none",
+                    borderBottom:
+                      activeTab === tab
+                        ? "2px solid #4f39f6"
+                        : "2px solid transparent",
+                    color:
+                      activeTab === tab
+                        ? state.isDarkMode
+                          ? "white"
+                          : "#0f172b"
+                        : state.isDarkMode
+                          ? "#90a1b9"
+                          : "#45556c",
+                    cursor: "pointer",
+                    fontSize: "16px",
+                    fontWeight: activeTab === tab ? "600" : "400",
+                    textTransform: "capitalize",
+                  }}
+                >
+                  {tab}
+                </button>
+              ),
+            )}
           </div>
 
           {/* Profile Section */}
-          {activeTab === 'profile' && (
+          {activeTab === "profile" && (
             <div>
-              <h2 style={{ 
-                fontSize: '24px', 
-                color: isDarkMode ? 'white' : '#0f172b',
-                marginBottom: '8px'
-              }}>
+              <h2
+                style={{
+                  fontSize: "24px",
+                  color: state.isDarkMode ? "white" : "#0f172b",
+                  marginBottom: "8px",
+                }}
+              >
                 Profile Settings
               </h2>
-              <p style={{ 
-                fontSize: '16px', 
-                color: isDarkMode ? '#90a1b9' : '#45556c',
-                marginBottom: '24px'
-              }}>
+              <p
+                style={{
+                  fontSize: "16px",
+                  color: state.isDarkMode ? "#90a1b9" : "#45556c",
+                  marginBottom: "24px",
+                }}
+              >
                 Manage your personal information and profile picture
               </p>
 
-              <div style={{
-                backgroundColor: isDarkMode ? '#1e293b' : 'white',
-                padding: '24px',
-                borderRadius: '12px',
-                border: `1px solid ${isDarkMode ? '#45556c' : '#cad5e2'}`,
-                boxShadow: '0px 10px 15px -3px rgba(0,0,0,0.1)'
-              }}>
+              <div
+                style={{
+                  backgroundColor: state.isDarkMode ? "#1e293b" : "white",
+                  padding: "24px",
+                  borderRadius: "12px",
+                  border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
+                  boxShadow: "0px 10px 15px -3px rgba(0,0,0,0.1)",
+                }}
+              >
                 {/* Avatar */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginBottom: '24px' }}>
-                  <div style={{
-                    width: '96px',
-                    height: '96px',
-                    backgroundColor: '#4f39f6',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontSize: '32px',
-                    fontWeight: '600'
-                  }}>
-                    JD
-                  </div>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "24px",
+                    marginBottom: "24px",
+                  }}
+                >
+                  {/* Profile picture or initials fallback */}
+                  {state.photoURL ? (
+                    <img
+                      src={state.photoURL}
+                      alt="Profile"
+                      style={{
+                        width: "96px",
+                        height: "96px",
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                        border: "3px solid #4f39f6",
+                        flexShrink: 0,
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: "96px",
+                        height: "96px",
+                        backgroundColor: "#4f39f6",
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "white",
+                        fontSize: "32px",
+                        fontWeight: "600",
+                        flexShrink: 0,
+                      }}
+                    >
+                      {(state.firstName?.[0] || "") +
+                        (state.lastName?.[0] || "")}
+                    </div>
+                  )}
+
                   <div>
-                    <button style={{
-                      padding: '10px 20px',
-                      backgroundColor: '#4f39f6',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      marginBottom: '8px'
-                    }}>
-                      Upload Photo
+                    {/* Hidden file input */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/gif"
+                      style={{ display: "none" }}
+                      onChange={handlePhotoUpload}
+                    />
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                      style={{
+                        padding: "10px 20px",
+                        backgroundColor: uploading ? "#9585fa" : "#4f39f6",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "8px",
+                        cursor: uploading ? "not-allowed" : "pointer",
+                        marginBottom: "8px",
+                        display: "block",
+                      }}
+                    >
+                      {uploading
+                        ? "Uploading…"
+                        : state.photoURL
+                          ? "Change Photo"
+                          : "Upload Photo"}
                     </button>
-                    <p style={{ fontSize: '14px', color: isDarkMode ? '#90a1b9' : '#45556c' }}>
-                      JPG, PNG or GIF. Max size 2MB
+                    <p
+                      style={{
+                        fontSize: "14px",
+                        color: state.isDarkMode ? "#90a1b9" : "#45556c",
+                        margin: 0,
+                      }}
+                    >
+                      JPG, PNG or GIF. Max size 500KB
                     </p>
                   </div>
                 </div>
 
-                <hr style={{ 
-                  border: 'none', 
-                  borderTop: `1px solid ${isDarkMode ? '#45556c' : '#e2e8f0'}`,
-                  margin: '24px 0'
-                }} />
+                <hr
+                  style={{
+                    border: "none",
+                    borderTop: `1px solid ${state.isDarkMode ? "#45556c" : "#e2e8f0"}`,
+                    margin: "24px 0",
+                  }}
+                />
 
                 {/* Name Fields */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "24px",
+                    marginBottom: "24px",
+                  }}
+                >
                   <div>
-                    <label style={{ 
-                      display: 'block', 
-                      marginBottom: '8px',
-                      color: isDarkMode ? 'white' : '#0f172b'
-                    }}>
+                    <label
+                      style={{
+                        display: "block",
+                        marginBottom: "8px",
+                        color: state.isDarkMode ? "white" : "#0f172b",
+                      }}
+                    >
                       First Name
                     </label>
                     <input
                       type="text"
-                      defaultValue="John"
+                      defaultValue={state.firstName}
+                      onChange={(e) => setters.setFirstName(e.target.value)}
                       style={{
-                        width: '100%',
-                        padding: '10px 2px',
-                        border: `1px solid ${isDarkMode ? '#45556c' : '#cad5e2'}`,
-                        borderRadius: '8px',
-                        backgroundColor: isDarkMode ? '#0f172b' : 'white',
-                        color: isDarkMode ? 'white' : '#0f172b'
+                        width: "100%",
+                        padding: "10px 2px",
+                        border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
+                        borderRadius: "8px",
+                        backgroundColor: state.isDarkMode ? "#0f172b" : "white",
+                        color: state.isDarkMode ? "white" : "#0f172b",
                       }}
                     />
                   </div>
                   <div>
-                    <label style={{ 
-                      display: 'block', 
-                      marginBottom: '8px',
-                      color: isDarkMode ? 'white' : '#0f172b'
-                    }}>
+                    <label
+                      style={{
+                        display: "block",
+                        marginBottom: "8px",
+                        color: state.isDarkMode ? "white" : "#0f172b",
+                      }}
+                    >
                       Last Name
                     </label>
                     <input
                       type="text"
-                      defaultValue="Doe"
+                      defaultValue={state.lastName}
+                      onChange={(e) => setters.setLastName(e.target.value)}
                       style={{
-                        width: '100%',
-                        padding: '10px 2px',
-                        border: `1px solid ${isDarkMode ? '#45556c' : '#cad5e2'}`,
-                        borderRadius: '8px',
-                        backgroundColor: isDarkMode ? '#0f172b' : 'white',
-                        color: isDarkMode ? 'white' : '#0f172b'
+                        width: "100%",
+                        padding: "10px 2px",
+                        border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
+                        borderRadius: "8px",
+                        backgroundColor: state.isDarkMode ? "#0f172b" : "white",
+                        color: state.isDarkMode ? "white" : "#0f172b",
                       }}
                     />
                   </div>
                 </div>
 
                 {/* Username */}
-                <div style={{ marginBottom: '24px' }}>
-                  <label style={{ 
-                    display: 'block', 
-                    marginBottom: '8px',
-                    color: isDarkMode ? 'white' : '#0f172b'
-                  }}>
+                <div style={{ marginBottom: "24px" }}>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "8px",
+                      color: state.isDarkMode ? "white" : "#0f172b",
+                    }}
+                  >
                     Username
                   </label>
                   <input
                     type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    aria-label="username"
+                    value={state.username}
+                    onChange={(e) => setters.setUsername(e.target.value)}
                     style={{
-                      width: '100%',
-                      padding: '10px 1px',
-                      border: `1px solid ${isDarkMode ? '#45556c' : '#cad5e2'}`,
-                      borderRadius: '8px',
-                      backgroundColor: isDarkMode ? '#0f172b' : 'white',
-                      color: isDarkMode ? 'white' : '#0f172b'
+                      width: "100%",
+                      padding: "10px 1px",
+                      border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
+                      borderRadius: "8px",
+                      backgroundColor: state.isDarkMode ? "#0f172b" : "white",
+                      color: state.isDarkMode ? "white" : "#0f172b",
                     }}
                   />
                 </div>
 
                 {/* Bio */}
-                <div style={{ marginBottom: '24px' }}>
-                  <label style={{ 
-                    display: 'block', 
-                    marginBottom: '8px',
-                    color: isDarkMode ? 'white' : '#0f172b'
-                  }}>
+                <div style={{ marginBottom: "24px" }}>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "8px",
+                      color: state.isDarkMode ? "white" : "#0f172b",
+                    }}
+                  >
                     Bio
                   </label>
                   <textarea
                     rows="4"
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
+                    value={state.bio}
+                    onChange={(e) => setters.setBio(e.target.value)}
                     placeholder="Tell us about yourself and your fitness journey..."
                     style={{
-                      width: '100%',
-                      padding: '10px 1px',
-                      border: `1px solid ${isDarkMode ? '#45556c' : '#cad5e2'}`,
-                      borderRadius: '8px',
-                      backgroundColor: isDarkMode ? '#0f172b' : 'white',
-                      color: isDarkMode ? 'white' : '#0f172b',
-                      fontFamily: 'inherit'
+                      width: "100%",
+                      padding: "10px 1px",
+                      border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
+                      borderRadius: "8px",
+                      backgroundColor: state.isDarkMode ? "#0f172b" : "white",
+                      color: state.isDarkMode ? "white" : "#0f172b",
+                      fontFamily: "inherit",
                     }}
                   />
                 </div>
 
                 {/* Fitness Goals */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "24px",
+                    marginBottom: "24px",
+                  }}
+                >
                   <div>
-                    <label style={{ 
-                      display: 'block', 
-                      marginBottom: '8px',
-                      color: isDarkMode ? 'white' : '#0f172b'
-                    }}>
+                    <label
+                      style={{
+                        display: "block",
+                        marginBottom: "8px",
+                        color: state.isDarkMode ? "white" : "#0f172b",
+                      }}
+                    >
                       Fitness Goal
                     </label>
                     <select
-                      value={fitnessGoal}
-                      onChange={(e) => setFitnessGoal(e.target.value)}
+                      value={state.fitnessGoal}
+                      onChange={(e) => setters.setFitnessGoal(e.target.value)}
                       style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        border: `1px solid ${isDarkMode ? '#45556c' : '#cad5e2'}`,
-                        borderRadius: '8px',
-                        backgroundColor: isDarkMode ? '#0f172b' : 'white',
-                        color: isDarkMode ? 'white' : '#0f172b'
+                        width: "100%",
+                        padding: "10px 12px",
+                        border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
+                        borderRadius: "8px",
+                        backgroundColor: state.isDarkMode ? "#0f172b" : "white",
+                        color: state.isDarkMode ? "white" : "#0f172b",
                       }}
                     >
                       <option value="lose_weight">Lose Weight</option>
@@ -333,39 +727,72 @@ useEffect(() => {
                     </select>
                   </div>
                   <div>
-                    <label style={{ 
-                      display: 'block', 
-                      marginBottom: '8px',
-                      color: isDarkMode ? 'white' : '#0f172b'
-                    }}>
+                    <label
+                      style={{
+                        display: "block",
+                        marginBottom: "8px",
+                        color: state.isDarkMode ? "white" : "#0f172b",
+                      }}
+                    >
                       Desired Weight (lbs)
                     </label>
                     <input
                       type="number"
-                      value={desiredWeight}
-                      onChange={(e) => setDesiredWeight(e.target.value)}
+                      value={state.desiredWeight}
+                      onChange={(e) => setters.setDesiredWeight(e.target.value)}
                       placeholder="e.g., 165"
                       style={{
-                        width: '100%',
-                        padding: '10px 1px',
-                        border: `1px solid ${isDarkMode ? '#45556c' : '#cad5e2'}`,
-                        borderRadius: '8px',
-                        backgroundColor: isDarkMode ? '#0f172b' : 'white',
-                        color: isDarkMode ? 'white' : '#0f172b'
+                        width: "100%",
+                        padding: "10px 1px",
+                        border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
+                        borderRadius: "8px",
+                        backgroundColor: state.isDarkMode ? "#0f172b" : "white",
+                        color: state.isDarkMode ? "white" : "#0f172b",
                       }}
                     />
                   </div>
+
+                  {/* Timezone */}
+                  <div>
+                    <label
+                      style={{
+                        display: "block",
+                        marginBottom: "12px",
+                        color: state.isDarkMode ? "white" : "#0f172b",
+                      }}
+                    >
+                      Time Zone
+                    </label>
+                    <select
+                      value={state.timezone}
+                      onChange={(e) => setters.setTimezone(e.target.value)}
+                      aria-label="Time Zone"
+                      style={{
+                        width: "100%",
+                        padding: "10px 12px",
+                        border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
+                        borderRadius: "8px",
+                        backgroundColor: state.isDarkMode ? "#0f172b" : "white",
+                        color: state.isDarkMode ? "white" : "#0f172b",
+                      }}
+                    >
+                      <option>Pacific Time (PT)</option>
+                      <option>Mountain Time (MT)</option>
+                      <option>Central Time (CT)</option>
+                      <option>Eastern Time (ET)</option>
+                    </select>
+                  </div>
                 </div>
 
-                <button 
+                <button
                   onClick={handleSaveProfile}
                   style={{
-                    padding: '10px 20px',
-                    backgroundColor: isDarkMode ? '#4f39f6' : '#4f39f6',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer'
+                    padding: "10px 20px",
+                    backgroundColor: state.isDarkMode ? "#4f39f6" : "#4f39f6",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "8px",
+                    cursor: "pointer",
                   }}
                 >
                   Save Changes
@@ -375,413 +802,603 @@ useEffect(() => {
           )}
 
           {/* Security Section */}
-          {activeTab === 'security' && (
+          {activeTab === "security" && (
             <div>
-              <h2 style={{ 
-                fontSize: '24px', 
-                color: isDarkMode ? 'white' : '#182b0fff',
-                marginBottom: '8px'
-              }}>
+              <h2
+                style={{
+                  fontSize: "24px",
+                  color: state.isDarkMode ? "white" : "#182b0fff",
+                  marginBottom: "8px",
+                }}
+              >
                 Account Security
               </h2>
-              <p style={{ 
-                fontSize: '16px', 
-                color: isDarkMode ? '#90a1b9' : '#45556c',
-                marginBottom: '24px'
-              }}>
+              <p
+                style={{
+                  fontSize: "16px",
+                  color: state.isDarkMode ? "#90a1b9" : "#45556c",
+                  marginBottom: "24px",
+                }}
+              >
                 Update your password and security settings
               </p>
 
-              <div style={{
-                backgroundColor: isDarkMode ? '#1e293b' : 'white',
-                padding: '24px',
-                borderRadius: '12px',
-                border: `1px solid ${isDarkMode ? '#45556c' : '#cad5e2'}`,
-                boxShadow: '0px 10px 15px -3px rgba(0,0,0,0.1)',
-                marginBottom: '24px'
-              }}>
-                <h3 style={{ 
-                  fontSize: '18px', 
-                  color: isDarkMode ? 'white' : '#0f172b',
-                  marginBottom: '4px'
-                }}>
+              <div
+                style={{
+                  backgroundColor: state.isDarkMode ? "#1e293b" : "white",
+                  padding: "24px",
+                  borderRadius: "12px",
+                  border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
+                  boxShadow: "0px 10px 15px -3px rgba(0,0,0,0.1)",
+                  marginBottom: "24px",
+                }}
+              >
+                <h3
+                  style={{
+                    fontSize: "18px",
+                    color: state.isDarkMode ? "white" : "#0f172b",
+                    marginBottom: "4px",
+                  }}
+                >
                   Change Password
                 </h3>
-                <p style={{ 
+                {/* <p style={{ 
                   fontSize: '14px', 
-                  color: isDarkMode ? '#90a1b9' : '#45556c',
+                  color: state.isDarkMode ? '#90a1b9' : '#45556c',
                   marginBottom: '16px'
                 }}>
                   Please provide your email to send a password reset link. The link will expire in 20 minutes.
-                </p>
+                </p> */}
 
-                <div style={{ marginBottom: '16px' }}>
+                {/* <div style={{ marginBottom: '16px' }}>
                   <label style={{ 
                     display: 'block', 
                     marginBottom: '8px',
-                    color: isDarkMode ? 'white' : '#0f172b'
+                    color: state.isDarkMode ? 'white' : '#0f172b'
                   }}>
                     Email Address
                   </label>
                   <input
                     type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    value={state.email}
+                    onChange={(e) => setters.setEmail(e.target.value)}
                     style={{
                       width: '100%',
                       padding: '10px 0px',
-                      border: `1px solid ${isDarkMode ? '#45556c' : '#cad5e2'}`,
+                      border: `1px solid ${state.isDarkMode ? '#45556c' : '#cad5e2'}`,
                       borderRadius: '8px',
-                      backgroundColor: isDarkMode ? '#0f172b' : 'white',
-                      color: isDarkMode ? 'white' : '#0f172b'
+                      backgroundColor: state.isDarkMode ? '#0f172b' : 'white',
+                      color: state.isDarkMode ? 'white' : '#0f172b'
                     }}
                   />
-                </div>
+                </div> */}
 
-                <button 
+                <button
                   onClick={handleSendResetLink}
                   style={{
-                    padding: '10px 20px',
-                    backgroundColor: '#4f39f6',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
+                    padding: "10px 20px",
+                    backgroundColor: "#4f39f6",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
                   }}
                 >
                   ✉️ Send Password Reset Link
                 </button>
               </div>
 
-              <div style={{
-                backgroundColor: isDarkMode ? '#1e293b' : 'white',
-                padding: '24px',
-                borderRadius: '12px',
-                border: `1px solid ${isDarkMode ? '#45556c' : '#cad5e2'}`,
-                boxShadow: '0px 10px 15px -3px rgba(0,0,0,0.1)'
-              }}>
-                <h3 style={{ 
-                  fontSize: '18px', 
-                  color: isDarkMode ? 'white' : '#0f172b',
-                  marginBottom: '4px'
-                }}>
+              <div
+                style={{
+                  backgroundColor: state.isDarkMode ? "#1e293b" : "white",
+                  padding: "24px",
+                  borderRadius: "12px",
+                  border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
+                  boxShadow: "0px 10px 15px -3px rgba(0,0,0,0.1)",
+                }}
+              >
+                <h3
+                  style={{
+                    fontSize: "18px",
+                    color: state.isDarkMode ? "white" : "#0f172b",
+                    marginBottom: "4px",
+                  }}
+                >
                   Two-Factor Authentication
                 </h3>
-                <p style={{ 
-                  fontSize: '14px', 
-                  color: isDarkMode ? '#90a1b9' : '#45556c',
-                  marginBottom: '16px'
-                }}>
+                <p
+                  style={{
+                    fontSize: "14px",
+                    color: state.isDarkMode ? "#90a1b9" : "#45556c",
+                    marginBottom: "16px",
+                  }}
+                >
                   Add an extra layer of security to your account
                 </p>
-                <button style={{
-                  padding: '10px 20px',
-                  backgroundColor: 'transparent',
-                  color: isDarkMode ? 'white' : '#0f172b',
-                  border: `1px solid ${isDarkMode ? '#45556c' : '#cad5e2'}`,
-                  borderRadius: '8px',
-                  cursor: 'pointer'
-                }}>
-                  Enable 2FA
-                </button>
+                <button
+  onClick={() => setShow2FASetup(!show2FASetup)}
+  style={{
+    padding: "10px 20px",
+    backgroundColor: "transparent",
+    color: state.isDarkMode ? "white" : "#0f172b",
+    border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
+    borderRadius: "8px",
+    cursor: "pointer",
+  }}
+>
+  {show2FASetup ? "Cancel 2FA Setup" : "Enable 2FA"}
+</button>
+
+{show2FASetup && (
+  <div style={{ marginTop: "20px" }}>
+    <label
+      style={{
+        display: "block",
+        marginBottom: "8px",
+        color: state.isDarkMode ? "white" : "#0f172b",
+      }}
+    >
+      Phone Number
+    </label>
+
+    <input
+      type="tel"
+      placeholder="+15555555555"
+      value={twoFAPhone}
+      onChange={(e) => setTwoFAPhone(e.target.value)}
+      style={{
+        width: "100%",
+        padding: "10px 8px",
+        marginBottom: "12px",
+        border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
+        borderRadius: "8px",
+        backgroundColor: state.isDarkMode ? "#0f172b" : "white",
+        color: state.isDarkMode ? "white" : "#0f172b",
+      }}
+    />
+
+    <button
+      onClick={handleSend2FACode}
+      disabled={sending2FA}
+      style={{
+        padding: "10px 20px",
+        backgroundColor: "#4f39f6",
+        color: "white",
+        border: "none",
+        borderRadius: "8px",
+        cursor: sending2FA ? "not-allowed" : "pointer",
+        marginBottom: "12px",
+      }}
+    >
+      {sending2FA ? "Sending..." : "Send SMS Code"}
+    </button>
+
+    {verificationId && (
+      <div style={{ marginTop: "12px" }}>
+        <label
+          style={{
+            display: "block",
+            marginBottom: "8px",
+            color: state.isDarkMode ? "white" : "#0f172b",
+          }}
+        >
+          SMS Code
+        </label>
+
+        <input
+          type="text"
+          placeholder="Enter code"
+          value={twoFACode}
+          onChange={(e) => setTwoFACode(e.target.value)}
+          style={{
+            width: "100%",
+            padding: "10px 8px",
+            marginBottom: "12px",
+            border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
+            borderRadius: "8px",
+            backgroundColor: state.isDarkMode ? "#0f172b" : "white",
+            color: state.isDarkMode ? "white" : "#0f172b",
+          }}
+        />
+
+        <button
+          onClick={handleVerifyAndEnable2FA}
+          disabled={verifying2FA}
+          style={{
+            padding: "10px 20px",
+            backgroundColor: "#4f39f6",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+            cursor: verifying2FA ? "not-allowed" : "pointer",
+          }}
+        >
+          {verifying2FA ? "Verifying..." : "Verify and Enable 2FA"}
+        </button>
+      </div>
+    )}
+
+    <div id="recaptcha-container"></div>
+  </div>
+)}
               </div>
             </div>
           )}
 
           {/* Preferences Section */}
-          {activeTab === 'preferences' && (
+          {activeTab === "preferences" && (
             <div>
-              <h2 style={{ 
-                fontSize: '24px', 
-                color: isDarkMode ? 'white' : '#0f172b',
-                marginBottom: '8px'
-              }}>
+              <h2
+                style={{
+                  fontSize: "24px",
+                  color: state.isDarkMode ? "white" : "#0f172b",
+                  marginBottom: "8px",
+                }}
+              >
                 Preferences
               </h2>
-              <p style={{ 
-                fontSize: '16px', 
-                color: isDarkMode ? '#90a1b9' : '#45556c',
-                marginBottom: '24px'
-              }}>
+              <p
+                style={{
+                  fontSize: "16px",
+                  color: state.isDarkMode ? "#90a1b9" : "#45556c",
+                  marginBottom: "24px",
+                }}
+              >
                 Customize your MacroTok experience
               </p>
 
-              <div style={{
-                backgroundColor: isDarkMode ? '#1e293b' : 'white',
-                padding: '24px',
-                borderRadius: '12px',
-                border: `1px solid ${isDarkMode ? '#45556c' : '#cad5e2'}`,
-                boxShadow: '0px 10px 15px -3px rgba(0,0,0,0.1)'
-              }}>
+              <div
+                style={{
+                  backgroundColor: state.isDarkMode ? "#1e293b" : "white",
+                  padding: "24px",
+                  borderRadius: "12px",
+                  border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
+                  boxShadow: "0px 10px 15px -3px rgba(0,0,0,0.1)",
+                }}
+              >
                 {/* Dark Mode Toggle */}
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center',
-                  marginBottom: '24px'
-                }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "24px",
+                  }}
+                >
                   <div>
-                    <div style={{ 
-                      color: isDarkMode ? 'white' : '#0f172b',
-                      marginBottom: '4px'
-                    }}>
+                    <div
+                      style={{
+                        color: state.isDarkMode ? "white" : "#0f172b",
+                        marginBottom: "4px",
+                      }}
+                    >
                       Dark Mode
                     </div>
-                    <div style={{ 
-                      fontSize: '14px', 
-                      color: isDarkMode ? '#90a1b9' : '#45556c'
-                    }}>
+                    <div
+                      style={{
+                        fontSize: "14px",
+                        color: state.isDarkMode ? "#90a1b9" : "#45556c",
+                      }}
+                    >
                       Switch between light and dark theme
                     </div>
                   </div>
-                  <label style={{ position: 'relative', display: 'inline-block', width: '48px', height: '24px' }}>
-                    <input 
-                      type="checkbox" 
-                      checked={isDarkMode}
-                      onChange={() => setIsDarkMode(!isDarkMode)}
+                  <label
+                    style={{
+                      position: "relative",
+                      display: "inline-block",
+                      width: "48px",
+                      height: "24px",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      aria-label="Dark Mode"
+                      checked={state.isDarkMode}
+                      onChange={() =>
+                        handleSettingsToggle("isDarkMode", state.isDarkMode)
+                      }
                       style={{ opacity: 0, width: 0, height: 0 }}
                     />
-                    <span style={{
-                      position: 'absolute',
-                      cursor: 'pointer',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      backgroundColor: isDarkMode ? '#4f39f6' : '#ccc',
-                      transition: '0.4s',
-                      borderRadius: '24px'
-                    }}>
-                      <span style={{
-                        position: 'absolute',
-                        content: '',
-                        height: '18px',
-                        width: '18px',
-                        left: isDarkMode ? '27px' : '3px',
-                        bottom: '3px',
-                        backgroundColor: 'white',
-                        transition: '0.4s',
-                        borderRadius: '50%'
-                      }} />
+                    <span
+                      style={{
+                        position: "absolute",
+                        cursor: "pointer",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: state.isDarkMode ? "#4f39f6" : "#ccc",
+                        transition: "0.4s",
+                        borderRadius: "24px",
+                      }}
+                    >
+                      <span
+                        style={{
+                          position: "absolute",
+                          content: "",
+                          height: "18px",
+                          width: "18px",
+                          left: state.isDarkMode ? "27px" : "3px",
+                          bottom: "3px",
+                          backgroundColor: "white",
+                          transition: "0.4s",
+                          borderRadius: "50%",
+                        }}
+                      />
                     </span>
                   </label>
                 </div>
 
-                <hr style={{ 
-                  border: 'none', 
-                  borderTop: `1px solid ${isDarkMode ? '#45556c' : '#e2e8f0'}`,
-                  margin: '24px 0'
-                }} />
+                <hr
+                  style={{
+                    border: "none",
+                    borderTop: `1px solid ${state.isDarkMode ? "#45556c" : "#e2e8f0"}`,
+                    margin: "24px 0",
+                  }}
+                />
 
                 {/* Email Notifications */}
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center',
-                  marginBottom: '24px'
-                }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "24px",
+                  }}
+                >
                   <div>
-                    <div style={{ 
-                      color: isDarkMode ? 'white' : '#0f172b',
-                      marginBottom: '4px'
-                    }}>
+                    <div
+                      style={{
+                        color: state.isDarkMode ? "white" : "#0f172b",
+                        marginBottom: "4px",
+                      }}
+                    >
                       Email Notifications
                     </div>
-                    <div style={{ 
-                      fontSize: '14px', 
-                      color: isDarkMode ? '#90a1b9' : '#45556c'
-                    }}>
+                    <div
+                      style={{
+                        fontSize: "14px",
+                        color: state.isDarkMode ? "#90a1b9" : "#45556c",
+                      }}
+                    >
                       Receive emails about your meal plans and recipes
                     </div>
                   </div>
-                  <input type="checkbox" defaultChecked style={{ width: '20px', height: '20px' }} />
+                  <input
+                    type="checkbox"
+                    checked={state.emailNotifications}
+                    onChange={() =>
+                      handleSettingsToggle(
+                        "emailNotifications",
+                        state.emailNotifications,
+                      )
+                    }
+                    style={{ width: "20px", height: "20px" }}
+                  />
                 </div>
 
-                <hr style={{ 
-                  border: 'none', 
-                  borderTop: `1px solid ${isDarkMode ? '#45556c' : '#e2e8f0'}`,
-                  margin: '24px 0'
-                }} />
+                <hr
+                  style={{
+                    border: "none",
+                    borderTop: `1px solid ${state.isDarkMode ? "#45556c" : "#e2e8f0"}`,
+                    margin: "24px 0",
+                  }}
+                />
 
                 {/* Push Notifications */}
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center',
-                  marginBottom: '24px'
-                }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "24px",
+                  }}
+                >
                   <div>
-                    <div style={{ 
-                      color: isDarkMode ? 'white' : '#0f172b',
-                      marginBottom: '4px'
-                    }}>
+                    <div
+                      style={{
+                        color: state.isDarkMode ? "white" : "#0f172b",
+                        marginBottom: "4px",
+                      }}
+                    >
                       Push Notifications
                     </div>
-                    <div style={{ 
-                      fontSize: '14px', 
-                      color: isDarkMode ? '#90a1b9' : '#45556c'
-                    }}>
+                    <div
+                      style={{
+                        fontSize: "14px",
+                        color: state.isDarkMode ? "#90a1b9" : "#45556c",
+                      }}
+                    >
                       Get reminders for meal times and weekly planning
                     </div>
                   </div>
-                  <input type="checkbox" defaultChecked style={{ width: '20px', height: '20px' }} />
+                  <input
+                    type="checkbox"
+                    checked={state.pushNotifications}
+                    onChange={() =>
+                      handleSettingsToggle(
+                        "pushNotifications",
+                        state.pushNotifications,
+                      )
+                    }
+                    style={{ width: "20px", height: "20px" }}
+                  />
                 </div>
 
-                <hr style={{ 
-                  border: 'none', 
-                  borderTop: `1px solid ${isDarkMode ? '#45556c' : '#e2e8f0'}`,
-                  margin: '24px 0'
-                }} />
+                <hr
+                  style={{
+                    border: "none",
+                    borderTop: `1px solid ${state.isDarkMode ? "#45556c" : "#e2e8f0"}`,
+                    margin: "24px 0",
+                  }}
+                />
 
                 {/* Community Updates */}
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center',
-                  marginBottom: '24px'
-                }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "24px",
+                  }}
+                >
                   <div>
-                    <div style={{ 
-                      color: isDarkMode ? 'white' : '#0f172b',
-                      marginBottom: '4px'
-                    }}>
+                    <div
+                      style={{
+                        color: state.isDarkMode ? "white" : "#0f172b",
+                        marginBottom: "4px",
+                      }}
+                    >
                       Community Updates
                     </div>
-                    <div style={{ 
-                      fontSize: '14px', 
-                      color: isDarkMode ? '#90a1b9' : '#45556c'
-                    }}>
+                    <div
+                      style={{
+                        fontSize: "14px",
+                        color: state.isDarkMode ? "#90a1b9" : "#45556c",
+                      }}
+                    >
                       Stay informed about community recipes and content
                     </div>
                   </div>
-                  <input type="checkbox" defaultChecked style={{ width: '20px', height: '20px' }} />
-                </div>
-
-                <hr style={{ 
-                  border: 'none', 
-                  borderTop: `1px solid ${isDarkMode ? '#45556c' : '#e2e8f0'}`,
-                  margin: '24px 0'
-                }} />
-
-                {/* Timezone */}
-                <div>
-                  <label style={{ 
-                    display: 'block', 
-                    marginBottom: '12px',
-                    color: isDarkMode ? 'white' : '#0f172b'
-                  }}>
-                    Time Zone
-                  </label>
-                  <select style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: `1px solid ${isDarkMode ? '#45556c' : '#cad5e2'}`,
-                    borderRadius: '8px',
-                    backgroundColor: isDarkMode ? '#0f172b' : 'white',
-                    color: isDarkMode ? 'white' : '#0f172b'
-                  }}>
-                    <option>Pacific Time (PT)</option>
-                    <option>Mountain Time (MT)</option>
-                    <option>Central Time (CT)</option>
-                    <option>Eastern Time (ET)</option>
-                  </select>
+                  <input
+                    type="checkbox"
+                    checked={state.communityUpdates}
+                    onChange={() =>
+                      handleSettingsToggle(
+                        "communityUpdates",
+                        state.communityUpdates,
+                      )
+                    }
+                    style={{ width: "20px", height: "20px" }}
+                  />
                 </div>
               </div>
             </div>
           )}
 
           {/* Privacy Section */}
-          {activeTab === 'privacy' && (
+          {activeTab === "privacy" && (
             <div>
-              <h2 style={{ 
-                fontSize: '24px', 
-                color: isDarkMode ? 'white' : '#0f172b',
-                marginBottom: '8px'
-              }}>
+              <h2
+                style={{
+                  fontSize: "24px",
+                  color: state.isDarkMode ? "white" : "#0f172b",
+                  marginBottom: "8px",
+                }}
+              >
                 Privacy Settings
               </h2>
-              <p style={{ 
-                fontSize: '16px', 
-                color: isDarkMode ? '#90a1b9' : '#45556c',
-                marginBottom: '24px'
-              }}>
+              <p
+                style={{
+                  fontSize: "16px",
+                  color: state.isDarkMode ? "#90a1b9" : "#45556c",
+                  marginBottom: "24px",
+                }}
+              >
                 Control who can see your content and activity
               </p>
 
-              <div style={{
-                backgroundColor: isDarkMode ? '#1e293b' : 'white',
-                padding: '24px',
-                borderRadius: '12px',
-                border: `1px solid ${isDarkMode ? '#45556c' : '#cad5e2'}`,
-                boxShadow: '0px 10px 15px -3px rgba(0,0,0,0.1)',
-                marginBottom: '24px'
-              }}>
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center'
-                }}>
+              <div
+                style={{
+                  backgroundColor: state.isDarkMode ? "#1e293b" : "white",
+                  padding: "24px",
+                  borderRadius: "12px",
+                  border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
+                  boxShadow: "0px 10px 15px -3px rgba(0,0,0,0.1)",
+                  marginBottom: "24px",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
                   <div>
-                    <div style={{ 
-                      color: isDarkMode ? 'white' : '#0f172b',
-                      marginBottom: '4px'
-                    }}>
+                    <div
+                      style={{
+                        color: state.isDarkMode ? "white" : "#0f172b",
+                        marginBottom: "4px",
+                      }}
+                    >
                       Public Profile
                     </div>
-                    <div style={{ 
-                      fontSize: '14px', 
-                      color: isDarkMode ? '#90a1b9' : '#45556c'
-                    }}>
+                    <div
+                      style={{
+                        fontSize: "14px",
+                        color: state.isDarkMode ? "#90a1b9" : "#45556c",
+                      }}
+                    >
                       Make your profile visible to all users
                     </div>
                   </div>
-                  <input type="checkbox" defaultChecked style={{ width: '20px', height: '20px' }} />
+                  <input
+                    type="checkbox"
+                    aria-label="public profile"
+                    checked={state.isPublic}
+                    onChange={() =>
+                      handleSettingsToggle("isPublic", state.isPublic)
+                    }
+                    style={{ width: "20px", height: "20px" }}
+                  />
                 </div>
               </div>
 
-              <div style={{
-                backgroundColor: isDarkMode ? '#1e293b' : 'white',
-                padding: '24px',
-                borderRadius: '12px',
-                border: `1px solid ${isDarkMode ? '#45556c' : '#cad5e2'}`,
-                boxShadow: '0px 10px 15px -3px rgba(0,0,0,0.1)'
-              }}>
-                <h3 style={{ 
-                  fontSize: '18px', 
-                  color: isDarkMode ? 'white' : '#0f172b',
-                  marginBottom: '4px'
-                }}>
+              <div
+                style={{
+                  backgroundColor: state.isDarkMode ? "#1e293b" : "white",
+                  padding: "24px",
+                  borderRadius: "12px",
+                  border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
+                  boxShadow: "0px 10px 15px -3px rgba(0,0,0,0.1)",
+                }}
+              >
+                <h3
+                  style={{
+                    fontSize: "18px",
+                    color: state.isDarkMode ? "white" : "#0f172b",
+                    marginBottom: "4px",
+                  }}
+                >
                   Data & Privacy
                 </h3>
-                <p style={{ 
-                  fontSize: '14px', 
-                  color: isDarkMode ? '#90a1b9' : '#45556c',
-                  marginBottom: '16px'
-                }}>
+                <p
+                  style={{
+                    fontSize: "14px",
+                    color: state.isDarkMode ? "#90a1b9" : "#45556c",
+                    marginBottom: "16px",
+                  }}
+                >
                   Download or manage your personal data
                 </p>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <button style={{
-                    padding: '10px 20px',
-                    backgroundColor: 'transparent',
-                    color: isDarkMode ? 'white' : '#0f172b',
-                    border: `1px solid ${isDarkMode ? '#45556c' : '#cad5e2'}`,
-                    borderRadius: '8px',
-                    cursor: 'pointer'
-                  }}>
+                <div style={{ display: "flex", gap: "12px" }}>
+                  <button
+                    style={{
+                      padding: "10px 20px",
+                      backgroundColor: "transparent",
+                      color: state.isDarkMode ? "white" : "#0f172b",
+                      border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                    }}
+                  >
                     Download My Data
                   </button>
-                  <button style={{
-                    padding: '10px 20px',
-                    backgroundColor: 'transparent',
-                    color: isDarkMode ? 'white' : '#0f172b',
-                    border: `1px solid ${isDarkMode ? '#45556c' : '#cad5e2'}`,
-                    borderRadius: '8px',
-                    cursor: 'pointer'
-                  }}>
+                  <button
+                    style={{
+                      padding: "10px 20px",
+                      backgroundColor: "transparent",
+                      color: state.isDarkMode ? "white" : "#0f172b",
+                      border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                    }}
+                  >
                     Privacy Policy
                   </button>
                 </div>
@@ -790,55 +1407,70 @@ useEffect(() => {
           )}
 
           {/* Account Management Section */}
-          {activeTab === 'account' && (
+          {activeTab === "account" && (
             <div>
-              <h2 style={{ 
-                fontSize: '24px', 
-                color: isDarkMode ? 'white' : '#0f172b',
-                marginBottom: '8px'
-              }}>
+              <h2
+                style={{
+                  fontSize: "24px",
+                  color: state.isDarkMode ? "white" : "#0f172b",
+                  marginBottom: "8px",
+                }}
+              >
                 Account Management
               </h2>
-              <p style={{ 
-                fontSize: '16px', 
-                color: isDarkMode ? '#90a1b9' : '#45556c',
-                marginBottom: '24px'
-              }}>
+              <p
+                style={{
+                  fontSize: "16px",
+                  color: state.isDarkMode ? "#90a1b9" : "#45556c",
+                  marginBottom: "24px",
+                }}
+              >
                 Deactivate or delete your account
               </p>
 
               {/* Deactivate Account */}
-              <div style={{
-                backgroundColor: isDarkMode ? '#1e293b' : 'white',
-                padding: '24px',
-                borderRadius: '12px',
-                border: `1px solid ${isDarkMode ? 'rgba(251, 191, 36, 0.5)' : 'rgb(254, 240, 199)'}`,
-                boxShadow: '0px 10px 15px -3px rgba(251,191,36,0.1)',
-                marginBottom: '24px'
-              }}>
-                <h3 style={{ 
-                  fontSize: '18px', 
-                  color: isDarkMode ? 'rgb(251, 191, 36)' : 'rgb(180, 83, 9)',
-                  marginBottom: '4px'
-                }}>
+              <div
+                style={{
+                  backgroundColor: state.isDarkMode ? "#1e293b" : "white",
+                  padding: "24px",
+                  borderRadius: "12px",
+                  border: `1px solid ${state.isDarkMode ? "rgba(251, 191, 36, 0.5)" : "rgb(254, 240, 199)"}`,
+                  boxShadow: "0px 10px 15px -3px rgba(251,191,36,0.1)",
+                  marginBottom: "24px",
+                }}
+              >
+                <h3
+                  style={{
+                    fontSize: "18px",
+                    color: state.isDarkMode
+                      ? "rgb(251, 191, 36)"
+                      : "rgb(180, 83, 9)",
+                    marginBottom: "4px",
+                  }}
+                >
                   Deactivate Account
                 </h3>
-                <p style={{ 
-                  fontSize: '14px', 
-                  color: isDarkMode ? '#90a1b9' : '#45556c',
-                  marginBottom: '16px'
-                }}>
-                  Temporarily disable your account. You can reactivate it anytime by logging back in. Your data will be preserved.
+                <p
+                  style={{
+                    fontSize: "14px",
+                    color: state.isDarkMode ? "#90a1b9" : "#45556c",
+                    marginBottom: "16px",
+                  }}
+                >
+                  Temporarily disable your account. You can reactivate it
+                  anytime by logging back in. Your data will be preserved.
                 </p>
-                <button 
+                <button
                   onClick={() => setShowDeactivateDialog(true)}
                   style={{
-                    padding: '10px 20px',
-                    backgroundColor: 'transparent',
-                    color: isDarkMode ? 'rgb(251, 191, 36)' : 'rgb(180, 83, 9)',
-                    border: `1px solid ${isDarkMode ? 'rgb(251, 191, 36)' : 'rgb(217, 119, 6)'}`,
-                    borderRadius: '8px',
-                    cursor: 'pointer'
+                    padding: "10px 20px",
+                    backgroundColor: "transparent",
+                    color: state.isDarkMode
+                      ? "rgb(251, 191, 36)"
+                      : "rgb(180, 83, 9)",
+                    border: `1px solid ${state.isDarkMode ? "rgb(251, 191, 36)" : "rgb(217, 119, 6)"}`,
+                    borderRadius: "8px",
+                    cursor: "pointer",
                   }}
                 >
                   Deactivate Account
@@ -846,36 +1478,48 @@ useEffect(() => {
               </div>
 
               {/* Delete Account */}
-              <div style={{
-                backgroundColor: isDarkMode ? '#1e293b' : 'white',
-                padding: '24px',
-                borderRadius: '12px',
-                border: `1px solid ${isDarkMode ? 'rgba(239, 68, 68, 0.5)' : 'rgb(254, 226, 226)'}`,
-                boxShadow: '0px 10px 15px -3px rgba(239,68,68,0.1)'
-              }}>
-                <h3 style={{ 
-                  fontSize: '18px', 
-                  color: isDarkMode ? 'rgb(248, 113, 113)' : 'rgb(220, 38, 38)',
-                  marginBottom: '4px'
-                }}>
+              <div
+                style={{
+                  backgroundColor: state.isDarkMode ? "#1e293b" : "white",
+                  padding: "24px",
+                  borderRadius: "12px",
+                  border: `1px solid ${state.isDarkMode ? "rgba(239, 68, 68, 0.5)" : "rgb(254, 226, 226)"}`,
+                  boxShadow: "0px 10px 15px -3px rgba(239,68,68,0.1)",
+                }}
+              >
+                <h3
+                  style={{
+                    fontSize: "18px",
+                    color: state.isDarkMode
+                      ? "rgb(248, 113, 113)"
+                      : "rgb(220, 38, 38)",
+                    marginBottom: "4px",
+                  }}
+                >
                   Delete Account
                 </h3>
-                <p style={{ 
-                  fontSize: '14px', 
-                  color: isDarkMode ? '#90a1b9' : '#45556c',
-                  marginBottom: '16px'
-                }}>
-                  Once you delete your account, there is no going back. All your meal plans, recipes, and data will be permanently deleted. This action cannot be undone.
+                <p
+                  style={{
+                    fontSize: "14px",
+                    color: state.isDarkMode ? "#90a1b9" : "#45556c",
+                    marginBottom: "16px",
+                  }}
+                >
+                  Once you delete your account, there is no going back. All your
+                  meal plans, recipes, and data will be permanently deleted.
+                  This action cannot be undone.
                 </p>
-                <button 
+                <button
                   onClick={() => setShowDeleteDialog(true)}
                   style={{
-                    padding: '10px 20px',
-                    backgroundColor: 'transparent',
-                    color: isDarkMode ? 'rgb(248, 113, 113)' : 'rgb(220, 38, 38)',
-                    border: `1px solid ${isDarkMode ? 'rgb(239, 68, 68)' : 'rgb(220, 38, 38)'}`,
-                    borderRadius: '8px',
-                    cursor: 'pointer'
+                    padding: "10px 20px",
+                    backgroundColor: "transparent",
+                    color: state.isDarkMode
+                      ? "rgb(248, 113, 113)"
+                      : "rgb(220, 38, 38)",
+                    border: `1px solid ${state.isDarkMode ? "rgb(239, 68, 68)" : "rgb(220, 38, 38)"}`,
+                    borderRadius: "8px",
+                    cursor: "pointer",
                   }}
                 >
                   Delete My Account
@@ -884,62 +1528,78 @@ useEffect(() => {
 
               {/* Deactivate Dialog */}
               {showDeactivateDialog && (
-                <div style={{
-                  position: 'fixed',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  zIndex: 1000
-                }}>
-                  <div style={{
-                    backgroundColor: isDarkMode ? '#1e293b' : 'white',
-                    padding: '32px',
-                    borderRadius: '12px',
-                    maxWidth: '500px',
-                    border: `1px solid ${isDarkMode ? '#45556c' : '#cad5e2'}`
-                  }}>
-                    <h3 style={{ 
-                      fontSize: '20px',
-                      color: isDarkMode ? 'white' : '#0f172b',
-                      marginBottom: '12px'
-                    }}>
+                <div
+                  style={{
+                    position: "fixed",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: "rgba(0, 0, 0, 0.5)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    zIndex: 1000,
+                  }}
+                >
+                  <div
+                    style={{
+                      backgroundColor: state.isDarkMode ? "#1e293b" : "white",
+                      padding: "32px",
+                      borderRadius: "12px",
+                      maxWidth: "500px",
+                      border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
+                    }}
+                  >
+                    <h3
+                      style={{
+                        fontSize: "20px",
+                        color: state.isDarkMode ? "white" : "#0f172b",
+                        marginBottom: "12px",
+                      }}
+                    >
                       Deactivate your account?
                     </h3>
-                    <p style={{ 
-                      fontSize: '14px',
-                      color: isDarkMode ? '#90a1b9' : '#45556c',
-                      marginBottom: '24px'
-                    }}>
-                      Your profile and content will be hidden until you reactivate your account by logging back in. Your data will be safely stored.
+                    <p
+                      style={{
+                        fontSize: "14px",
+                        color: state.isDarkMode ? "#90a1b9" : "#45556c",
+                        marginBottom: "24px",
+                      }}
+                    >
+                      Your profile and content will be hidden until you
+                      reactivate your account by logging back in. Your data will
+                      be safely stored.
                     </p>
-                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                      <button 
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: "12px",
+                        justifyContent: "flex-end",
+                      }}
+                    >
+                      <button
                         onClick={() => setShowDeactivateDialog(false)}
                         style={{
-                          padding: '10px 20px',
-                          backgroundColor: 'transparent',
-                          color: isDarkMode ? 'white' : '#0f172b',
-                          border: `1px solid ${isDarkMode ? '#45556c' : '#cad5e2'}`,
-                          borderRadius: '8px',
-                          cursor: 'pointer'
+                          padding: "10px 20px",
+                          backgroundColor: "transparent",
+                          color: state.isDarkMode ? "white" : "#0f172b",
+                          border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
+                          borderRadius: "8px",
+                          cursor: "pointer",
                         }}
                       >
                         Cancel
                       </button>
-                      <button 
+                      <button
                         onClick={handleDeactivate}
                         style={{
-                          padding: '10px 20px',
-                          backgroundColor: 'rgb(217, 119, 6)',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '8px',
-                          cursor: 'pointer'
+                          padding: "10px 20px",
+                          backgroundColor: "rgb(217, 119, 6)",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "8px",
+                          cursor: "pointer",
                         }}
                       >
                         Deactivate
@@ -951,73 +1611,91 @@ useEffect(() => {
 
               {/* Delete Dialog */}
               {showDeleteDialog && (
-                <div style={{
-                  position: 'fixed',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  zIndex: 1000
-                }}>
-                  <div style={{
-                    backgroundColor: isDarkMode ? '#1e293b' : 'white',
-                    padding: '32px',
-                    borderRadius: '12px',
-                    maxWidth: '500px',
-                    border: `1px solid ${isDarkMode ? '#45556c' : '#cad5e2'}`
-                  }}>
-                    <h3 style={{ 
-                      fontSize: '20px',
-                      color: isDarkMode ? 'white' : '#0f172b',
-                      marginBottom: '12px'
-                    }}>
+                <div
+                  style={{
+                    position: "fixed",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: "rgba(0, 0, 0, 0.5)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    zIndex: 1000,
+                  }}
+                >
+                  <div
+                    style={{
+                      backgroundColor: state.isDarkMode ? "#1e293b" : "white",
+                      padding: "32px",
+                      borderRadius: "12px",
+                      maxWidth: "500px",
+                      border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
+                    }}
+                  >
+                    <h3
+                      style={{
+                        fontSize: "20px",
+                        color: state.isDarkMode ? "white" : "#0f172b",
+                        marginBottom: "12px",
+                      }}
+                    >
                       Are you absolutely sure?
                     </h3>
-                    <p style={{ 
-                      fontSize: '14px',
-                      color: isDarkMode ? '#90a1b9' : '#45556c',
-                      marginBottom: '12px'
-                    }}>
-                      This action cannot be undone. This will permanently delete your account and remove all your data from our servers including:
+                    <p
+                      style={{
+                        fontSize: "14px",
+                        color: state.isDarkMode ? "#90a1b9" : "#45556c",
+                        marginBottom: "12px",
+                      }}
+                    >
+                      This action cannot be undone. This will permanently delete
+                      your account and remove all your data from our servers
+                      including:
                     </p>
-                    <ul style={{ 
-                      fontSize: '14px',
-                      color: isDarkMode ? '#90a1b9' : '#45556c',
-                      marginBottom: '24px',
-                      paddingLeft: '20px'
-                    }}>
+                    <ul
+                      style={{
+                        fontSize: "14px",
+                        color: state.isDarkMode ? "#90a1b9" : "#45556c",
+                        marginBottom: "24px",
+                        paddingLeft: "20px",
+                      }}
+                    >
                       <li>Your profile and account information</li>
                       <li>All meal plans and recipes</li>
                       <li>Saved preferences and settings</li>
                       <li>Community contributions</li>
                     </ul>
-                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                      <button 
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: "12px",
+                        justifyContent: "flex-end",
+                      }}
+                    >
+                      <button
                         onClick={() => setShowDeleteDialog(false)}
                         style={{
-                          padding: '10px 20px',
-                          backgroundColor: 'transparent',
-                          color: isDarkMode ? 'white' : '#0f172b',
-                          border: `1px solid ${isDarkMode ? '#45556c' : '#cad5e2'}`,
-                          borderRadius: '8px',
-                          cursor: 'pointer'
+                          padding: "10px 20px",
+                          backgroundColor: "transparent",
+                          color: state.isDarkMode ? "white" : "#0f172b",
+                          border: `1px solid ${state.isDarkMode ? "#45556c" : "#cad5e2"}`,
+                          borderRadius: "8px",
+                          cursor: "pointer",
                         }}
                       >
                         Cancel
                       </button>
-                      <button 
+                      <button
                         onClick={handleDelete}
                         style={{
-                          padding: '10px 20px',
-                          backgroundColor: 'rgb(220, 38, 38)',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '8px',
-                          cursor: 'pointer'
+                          padding: "10px 20px",
+                          backgroundColor: "rgb(220, 38, 38)",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "8px",
+                          cursor: "pointer",
                         }}
                       >
                         Delete Account

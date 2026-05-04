@@ -1,0 +1,86 @@
+/* src/app/recipes/recipes.css */
+
+.calendar-trigger {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(4px);
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  border-radius: 10px;
+  padding: 7px 9px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+}
+
+.calendar-trigger:hover {
+  background: rgba(255, 255, 255, 0.28);
+  border-color: rgba(255, 255, 255, 0.6);
+  transform: translateY(-1px);
+}
+
+/* Scheduled state — filled blue pill */
+.calendar-trigger.scheduled {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.5);
+}
+
+.calendar-trigger.scheduled:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.6);
+  transform: translateY(-1px);
+}
+
+/* Date Picker Popover Styling */
+.date-picker-popover {
+  position: absolute;
+  top: 50px;
+  right: 10px;
+  background: white;
+  border-radius: 12px;
+  padding: 15px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 180px;
+  color: #333;
+}
+
+.date-picker-popover input,
+.date-picker-popover select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.RepTitle {
+  background-color: grey;
+  width: 50%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.RepImg {
+  background-color: grey;
+}
+.Title {
+  font-size: 50px;
+  font-weight: bold;
+}
+
+ul {
+  font-size: 25px;
+}
+
+/*DROPDOWN.JSX CSS*/
+.dropdown {
+  position: relative;
+}

@@ -227,9 +227,6 @@ html {
   background-color: #fff;
 }
 
-
-
-
 .modern-login-page .container {
   flex: 1;
   height: 100%;
@@ -245,8 +242,6 @@ html {
   align-items: center;
 }
 
-
-
 .modern-login-page .div {
   position: relative;
   width: 100%;
@@ -261,7 +256,12 @@ html {
   height: 384px;
   border-radius: 33554400px;
   filter: blur(64px);
-  background: linear-gradient(117deg, rgba(2, 74, 164, 0.3) 0%, rgba(16, 24, 40, 1) 47%, rgba(0, 70, 157, 0.24) 64%);
+  background: linear-gradient(
+    117deg,
+    rgba(2, 74, 164, 0.3) 0%,
+    rgba(16, 24, 40, 1) 47%,
+    rgba(0, 70, 157, 0.24) 64%
+  );
 }
 
 .modern-login-page .container-3 {
@@ -272,7 +272,11 @@ html {
   height: 484px;
   border-radius: 63554400px;
   filter: blur(64px);
-  background: linear-gradient(117deg, rgb(88, 107, 137) 30%, rgba(24, 33, 49, 1) 66%);
+  background: linear-gradient(
+    117deg,
+    rgb(88, 107, 137) 30%,
+    rgba(24, 33, 49, 1) 66%
+  );
 }
 
 .modern-login-page .container-4 {
@@ -283,7 +287,12 @@ html {
   height: 600px;
   border-radius: 33554400px;
   filter: blur(64px);
-  background: linear-gradient(117deg, rgba(255, 255, 255, 0.4) 0%, rgba(239, 246, 255, 0.2) 50%, rgba(0, 0, 0, 0) 100%);
+  background: linear-gradient(
+    117deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(239, 246, 255, 0.2) 50%,
+    rgba(0, 0, 0, 0) 100%
+  );
 }
 
 .modern-login-page .img {
@@ -709,7 +718,12 @@ html {
   border: 1px solid;
   border-color: #fffefe66;
   box-shadow: 0px 8px 32px #00000033;
-  background: linear-gradient(117deg, rgba(30, 41, 57, 0.3) 0%, rgba(54, 65, 83, 0.2) 50%, rgba(30, 41, 57, 0.3) 100%);
+  background: linear-gradient(
+    117deg,
+    rgba(30, 41, 57, 0.3) 0%,
+    rgba(54, 65, 83, 0.2) 50%,
+    rgba(30, 41, 57, 0.3) 100%
+  );
 }
 
 .modern-login-page .text-wrapper-7 {
@@ -871,9 +885,6 @@ html {
   align-items: center;
 }
 
-
-
-
 .modern-login-page .container-14 {
   position: absolute;
   top: 0;
@@ -1019,14 +1030,17 @@ html {
   border-radius: 16px;
 }
 
-
 .modern-login-page .container-20 {
   position: absolute;
   top: 1px;
   left: 1px;
   width: 510px;
   height: 320px;
-  background: linear-gradient(0deg, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0) 100%);
+  background: linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.6) 0%,
+    rgba(0, 0, 0, 0) 100%
+  );
 }
 
 .modern-login-page .container-21 {
