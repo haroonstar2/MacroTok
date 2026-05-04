@@ -340,8 +340,8 @@ Purpose: Layout + card grid + micro-components (chips, stat bars)
   */
 .heart {
   position: absolute;
-  right: 14px;
-  top: 14px;
+  right: 1px;
+  top: 50px;
   width: 36px;
   height: 36px;
   border-radius: 999px;

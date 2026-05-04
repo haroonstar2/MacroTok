@@ -18,6 +18,11 @@ import RecipeView from "./app/recipes/RecipeView";
 import SettingsPage from "./app/profile/SettingsPage";
 import LikedPage from "./app/liked/LikedPage";
 import useRecipesStore from "./store/recipeStore";
+import Bot from "./app/bot/ButtonBot";
+import { CartProvider } from "./context/cartcontext";
+import ShoppingPage from "./app/shopping/shoppingcart";
+import Setup2FA from "./app/login/verify2fa";
+
 import "./app/sidebar/sidebar.css";
 import "./App.css";
 
@@ -31,6 +36,8 @@ function AppLayout() {
   let active = "home";
   if (location.pathname.startsWith("/calendar")) active = "plan";
   if (location.pathname.startsWith("/liked")) active = "liked";
+  if (location.pathname.startsWith("/shopping")) active = "shopping";
+  if (location.pathname.startsWith("/bot")) active = "bot";
 
   const handleSidebarNav = (id) => {
     switch (id) {
@@ -42,6 +49,12 @@ function AppLayout() {
         break;
       case "liked":
         navigate("/liked");
+        break;
+      case "shopping":
+        navigate("/shopping");
+        break;
+      case "bot":
+        navigate("/bot");
         break;
       case "settings":
         navigate("/settings");
@@ -86,36 +99,41 @@ export default function App() {
 
   return (
     <div className={isDark ? "app app--dark" : "app app--light"}>
-      <Router>
-        <UserProvider>
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/login" element={<MacroTokLogin />} />
+      <CartProvider>
+        <Router>
+          <UserProvider>
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/login" element={<MacroTokLogin />} />
+              <Route path="/setup-2fa" element={<Setup2FA />} />
 
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute>
-                  <SettingsPage />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute>
+                    <SettingsPage />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              element={
-                <ProtectedRoute>
-                  <AppLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route path="/feed" element={<Feed />} />
-              <Route path="/calendar" element={<PlannerPage />} />
-              <Route path="/liked" element={<LikedPage />} />
-              <Route path="/recipe/:id" element={<RecipePage />} />
-            </Route>
-          </Routes>
-        </UserProvider>
-      </Router>
+              <Route
+                element={
+                  <ProtectedRoute>
+                    <AppLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route path="/feed" element={<Feed />} />
+                <Route path="/calendar" element={<PlannerPage />} />
+                <Route path="/liked" element={<LikedPage />} />
+                <Route path="/recipe/:id" element={<RecipePage />} />
+                <Route path="/shopping" element={<ShoppingPage />} />
+                <Route path="/bot" element={<Bot />} />
+              </Route>
+            </Routes>
+          </UserProvider>
+        </Router>
+      </CartProvider>
     </div>
   );
 }

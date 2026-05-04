@@ -13,6 +13,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
+  sendEmailVerification,
 } from "firebase/auth";
 
 import {
@@ -239,7 +240,8 @@ export const UserProvider = ({ children }) => {
           username: "",
         },
       });
-
+      await sendEmailVerification(user);
+      console.log("Verification email sent to:", user.email);
       await sendAccountCreatedEmail(user);
 
       return user;
