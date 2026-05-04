@@ -4,20 +4,27 @@ import "./style.css";
 import { useNavigate } from "react-router-dom";
 import { db, auth, provider } from "../../startFirebase";
 
+import { sendPasswordResetEmail } from "firebase/auth";
+
 import {
-  // createUserWithEmailAndPassword,
-  // signInWithEmailAndPassword,
-  // signInWithPopup,
-  sendPasswordResetEmail,
-  // getAdditionalUserInfo,
-  // signOut,
-} from "firebase/auth";
-// import { doc, setDoc } from "firebase/firestore";
+  sendAccountCreatedEmail,
+  sendAccountReactivatedEmail,
+  sendPasswordResetNotificationEmail,
+} from "../../api/emailService";
 
 import { useUser } from "../../UserContext";
 
 export default function MacroTokLogin() {
-  const { user, setUser, googleSignIn, emailSignIn, emailSignUp } = useUser();
+  const {
+    user,
+    setUser,
+    googleSignIn,
+    emailSignIn,
+    emailSignUp,
+    resetPassword,
+    reactivateAccount,
+  } = useUser();
+
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,9 +34,28 @@ export default function MacroTokLogin() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
 
-  const handleGoogleSignIn = async () => {
-    // await googleSignIn();
+  // Returns true if the account is deactivated and the user chose NOT to reactivate.
+  // Reactivates the account in Firestore if the user confirms.
+  const handleDeactivatedAccount = async (user) => {
+    const docRef = doc(db, "users", user.uid);
+    const docSnap = await getDoc(docRef);
 
+    if (docSnap.exists() && docSnap.data().isDeactivated === true) {
+      const reactivate = window.confirm(
+        "Your account is currently deactivated.\n\nWould you like to reactivate it now?",
+      );
+      if (reactivate) {
+        await reactivateAccount(user);
+        return false;
+      } else {
+        await signOut(auth);
+        return true;
+      }
+    }
+    return false;
+  };
+
+  const handleGoogleSignIn = async () => {
     try {
       const user = await googleSignIn();
       alert(`Success: Welcome, ${user.displayName}!`);

@@ -12,6 +12,7 @@ import {
   signInWithPopup,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 
 import {
@@ -20,7 +21,16 @@ import {
   updateDoc,
   deleteDoc,
   setDoc,
+  getDoc,
 } from "firebase/firestore";
+
+import {
+  sendAccountCreatedEmail,
+  sendAccountDeletedEmail,
+  sendAccountDeactivatedEmail,
+  sendAccountReactivatedEmail,
+  sendPasswordResetNotificationEmail,
+} from "./api/emailService";
 
 const UserContext = createContext();
 
@@ -87,6 +97,8 @@ export const UserProvider = ({ children }) => {
         await reauthenticateWithCredential(user, credential);
       }
 
+      await sendAccountDeletedEmail(user);
+
       const docRef = doc(db, "users", user.uid);
       await deleteDoc(docRef);
       await deleteUser(user);
@@ -96,6 +108,44 @@ export const UserProvider = ({ children }) => {
     } catch (error) {
       console.error("Deletion failed:", error);
       alert(`Error: ${error.message}`);
+    }
+  };
+
+  const deactivateAccount = async () => {
+    if (!user) return;
+    try {
+      const docRef = doc(db, "users", user.uid);
+      await updateDoc(docRef, { isDeactivated: true });
+      await sendAccountDeactivatedEmail(user);
+    } catch (error) {
+      console.error("Deactivation failed:", error);
+      throw error;
+    }
+  };
+
+  const reactivateAccount = async (currentUser = user) => {
+    if (!currentUser) return;
+    try {
+      const docRef = doc(db, "users", currentUser.uid);
+      await updateDoc(docRef, { isDeactivated: false });
+      await sendAccountReactivatedEmail(currentUser);
+    } catch (error) {
+      console.error("Reactivation failed:", error);
+      throw error;
+    }
+  };
+
+  const resetPassword = async (emailToReset) => {
+    try {
+      await sendPasswordResetEmail(auth, emailToReset);
+
+      await sendPasswordResetNotificationEmail({
+        email: emailToReset,
+        displayName: null,
+      });
+    } catch (error) {
+      console.error("Password reset error:", error);
+      throw error;
     }
   };
 
@@ -114,6 +164,7 @@ export const UserProvider = ({ children }) => {
           displayName: user.displayName,
           createdAt: new Date(),
           lastLogin: new Date(),
+          isDeactivated: false,
           // Default values for new users
           settings: {
             bio: "",
@@ -133,6 +184,7 @@ export const UserProvider = ({ children }) => {
             username: "",
           },
         });
+        await sendAccountCreatedEmail(user);
       }
       return user;
     } catch (error) {
@@ -167,6 +219,7 @@ export const UserProvider = ({ children }) => {
         displayName: displayName || "",
         createdAt: new Date(),
         lastLogin: new Date(),
+        isDeactivated: false,
         // Default values for new users
         settings: {
           bio: "",
@@ -187,6 +240,8 @@ export const UserProvider = ({ children }) => {
         },
       });
 
+      await sendAccountCreatedEmail(user);
+
       return user;
     } catch (error) {
       throw error;
@@ -201,6 +256,9 @@ export const UserProvider = ({ children }) => {
         loading,
         updateSettings,
         deleteAccount,
+        deactivateAccount,
+        reactivateAccount,
+        resetPassword,
         googleSignIn,
         emailSignIn,
         emailSignUp,
